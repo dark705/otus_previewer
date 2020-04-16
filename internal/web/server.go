@@ -52,13 +52,18 @@ func (s *Server) Shutdown() {
 }
 
 func ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Server", "Calendar")
+	w.Header().Set("Server", "Previewer")
 	_, _ = w.Write([]byte("Hello world"))
 }
 
 //middleware logger
 func logRequest(h http.HandlerFunc, l *logrus.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		p, err := parseUrl(r.URL)
+
+		l.Debugln("parser", p, err)
+
 		l.Infoln(fmt.Sprintf("%s %s %s", r.RemoteAddr, r.Method, r.URL))
 		h(w, r)
 	}

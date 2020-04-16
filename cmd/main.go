@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,8 +23,6 @@ func main() {
 
 	server.RunServer()
 	defer server.Shutdown()
-
-	fmt.Println(conf)
 
 	osSignals := make(chan os.Signal, 1)
 	signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
