@@ -1,36 +1,21 @@
 package config
 
 import (
-	"fmt"
-	"os"
+	"github.com/caarlos0/env"
+	"github.com/dark705/otus_previewer/internal/helpers"
 )
 
 type Config struct {
-	LogLevel   string
-	HttpListen string
-	CacheSize  int
+	LogLevel   string `env:"LOG_LEVEL" envDefault:"debug"`
+	HttpListen string `env:"HTTP_LISTEN" envDefault:":8013"`
+	CacheSize  int    `env:"CACHE_SIZE" envDefault:"10000000"`
 }
 
 func GetConfigFromEnv() Config {
-	c := Config{
-		LogLevel:   "debug",
-		HttpListen: ":8013",
-		CacheSize:  10 * 1024 * 1024,
-	}
+	c := Config{}
 
-	val := os.Getenv("LOG_LEVEL")
-	if val == "" {
-		fmt.Println("env LOG_LEVEL not defined, use default value:", c.LogLevel)
-	} else {
-		c.LogLevel = val
-	}
-
-	val = os.Getenv("HTTP_LISTEN")
-	if val == "" {
-		fmt.Println("env HTTP_LISTEN not defined, use default value:", c.HttpListen)
-	} else {
-		c.HttpListen = val
-	}
+	err := env.Parse(&c)
+	helpers.FailOnError(err, "Fail get config from Env")
 
 	return c
 }
