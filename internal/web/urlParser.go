@@ -15,7 +15,7 @@ type UrlParams struct {
 	RequestUrl string
 }
 
-func parseUrl(URL *url.URL) (p UrlParams, err error) {
+func ParseUrl(url *url.URL) (p UrlParams, err error) {
 	const (
 		widthIndex    = 2
 		heightIndex   = 3
@@ -23,7 +23,7 @@ func parseUrl(URL *url.URL) (p UrlParams, err error) {
 	)
 	var allowTypes = []string{"fill"}
 
-	path := URL.Path
+	path := url.Path
 	p = UrlParams{}
 	ps := strings.Split(path, "/")
 

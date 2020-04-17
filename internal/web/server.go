@@ -53,18 +53,35 @@ func (s *Server) Shutdown() {
 
 func ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Server", "Previewer")
-	_, _ = w.Write([]byte("Hello world"))
+	//_, _ = w.Write([]byte("Hello world"))
 }
 
 //middleware logger
 func logRequest(h http.HandlerFunc, l *logrus.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		p, err := parseUrl(r.URL)
+		l.Infoln(fmt.Sprintf("Income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
+		p, err := ParseUrl(r.URL)
+		l.Debugln("parser:", p, err)
 
-		l.Debugln("parser", p, err)
+		uniqId := GenUniqIdForUrl(r.URL)
 
-		l.Infoln(fmt.Sprintf("%s %s %s", r.RemoteAddr, r.Method, r.URL))
+		l.Infoln(fmt.Sprintf("Generate uniqId: %s for Url: %s", uniqId, r.URL.Path))
+
+		resp, err := GetContext("https://"+p.RequestUrl, r.Header, nil)
+		if err != nil {
+			resp, err = GetContext("http://"+p.RequestUrl, r.Header, nil)
+			if err != nil {
+				l.Warnln(err.Error())
+				//TODO check for error
+				w.Write([]byte(err.Error()))
+
+				return
+			}
+		}
+		//TODO check for error
+		w.Write(resp)
+
 		h(w, r)
 	}
 }
