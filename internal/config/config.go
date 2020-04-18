@@ -8,7 +8,7 @@ import (
 type Config struct {
 	LogLevel   string `env:"LOG_LEVEL" envDefault:"debug"`
 	HttpListen string `env:"HTTP_LISTEN" envDefault:":8013"`
-	CacheSize  int    `env:"CACHE_SIZE" envDefault:"10000000"`
+	CacheSize  int    `env:"CACHE_SIZE" envDefault:"7500"`
 }
 
 func GetConfigFromEnv() Config {

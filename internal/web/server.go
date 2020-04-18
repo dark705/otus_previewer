@@ -3,7 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
-	"github.com/dark705/otus_previewer/internal/storage"
+	"github.com/dark705/otus_previewer/internal/dispatcher"
 	"net/http"
 	"time"
 
@@ -14,7 +14,7 @@ import (
 type Server struct {
 	c  Config
 	l  *logrus.Logger
-	s  storage.Storage
+	sd *dispatcher.StorageDispatcher
 	ws *http.Server
 }
 
@@ -22,13 +22,13 @@ type Config struct {
 	HttpListen string
 }
 
-func NewServer(conf Config, log *logrus.Logger, stor storage.Storage) Server {
+func NewServer(conf Config, log *logrus.Logger, sd *dispatcher.StorageDispatcher) Server {
 
 	return Server{
 		c:  conf,
 		l:  log,
-		s:  stor,
-		ws: &http.Server{Addr: conf.HttpListen, Handler: logRequest(ServeHTTP, log, stor)},
+		sd: sd,
+		ws: &http.Server{Addr: conf.HttpListen, Handler: logRequest(ServeHTTP, log, sd)},
 	}
 }
 
@@ -60,7 +60,7 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //middleware logger
-func logRequest(h http.HandlerFunc, l *logrus.Logger, s storage.Storage) http.HandlerFunc {
+func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDispatcher) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		l.Infoln(fmt.Sprintf("Income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
@@ -69,18 +69,16 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger, s storage.Storage) http.Ha
 
 		uniqId := GenUniqIdForUrl(r.URL)
 		l.Infoln(fmt.Sprintf("Generate uniqId: %s for Url: %s", uniqId, r.URL.Path))
-		l.Debugln("Storage usage:", s.Usage())
+		l.Debugln("Storage Dispatcher usage:", sd.Usage())
 
-		cont, err := s.Get(uniqId)
-		if err != nil {
-			l.Infoln(fmt.Sprintf("Content for uniqId: %s, not found in cache", uniqId))
-		} else {
+		if sd.Exist(uniqId) {
 			l.Infoln(fmt.Sprintf("Content for uniqId: %s, found in cache", uniqId))
+			cont, _ := sd.Get(uniqId)
 			w.Write(cont)
 			return
 		}
-
-		cont, err = GetContext("https://"+p.RequestUrl, r.Header, nil)
+		l.Infoln(fmt.Sprintf("Content for uniqId: %s, not found in cache", uniqId))
+		cont, err := GetContext("https://"+p.RequestUrl, r.Header, nil)
 		if err != nil {
 			cont, err = GetContext("http://"+p.RequestUrl, r.Header, nil)
 			if err != nil {
@@ -93,7 +91,8 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger, s storage.Storage) http.Ha
 
 		//TODO check for error
 		w.Write(cont)
-		s.Add(uniqId, cont)
+		sd.Add(uniqId, cont)
+		l.Debugln("Storage Dispatcher usage:", sd.Usage())
 
 		h(w, r)
 	}

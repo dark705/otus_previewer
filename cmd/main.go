@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dark705/otus_previewer/internal/dispatcher"
 	"github.com/dark705/otus_previewer/internal/storage"
 	"os"
 	"os/signal"
@@ -19,10 +20,11 @@ func main() {
 	})
 
 	stor := storage.New()
+	storDis := dispatcher.New(&stor, conf.CacheSize, &log)
 
 	server := web.NewServer(web.Config{
 		HttpListen: conf.HttpListen,
-	}, &log, &stor)
+	}, &log, &storDis)
 
 	server.RunServer()
 	defer server.Shutdown()

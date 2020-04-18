@@ -5,4 +5,5 @@ type Storage interface {
 	Del(id string) error
 	Get(id string) ([]byte, error)
 	Usage() int
+	GetUniqId() []string
 }

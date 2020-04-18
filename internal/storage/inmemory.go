@@ -46,3 +46,11 @@ func (s *InMemory) Usage() int {
 	}
 	return usage
 }
+
+func (s *InMemory) GetUniqId() []string {
+	uniqId := make([]string, 0, len(s.storage))
+	for id := range s.storage {
+		uniqId = append(uniqId, id)
+	}
+	return uniqId
+}
