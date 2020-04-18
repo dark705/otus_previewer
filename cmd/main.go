@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dark705/otus_previewer/internal/storage"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,9 +18,11 @@ func main() {
 		Level: conf.LogLevel,
 	})
 
+	stor := storage.New()
+
 	server := web.NewServer(web.Config{
 		HttpListen: conf.HttpListen,
-	}, &log)
+	}, &log, &stor)
 
 	server.RunServer()
 	defer server.Shutdown()

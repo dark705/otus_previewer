@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"github.com/dark705/otus_previewer/internal/storage"
 	"net/http"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 type Server struct {
 	c  Config
 	l  *logrus.Logger
+	s  storage.Storage
 	ws *http.Server
 }
 
@@ -20,12 +22,13 @@ type Config struct {
 	HttpListen string
 }
 
-func NewServer(conf Config, log *logrus.Logger) Server {
+func NewServer(conf Config, log *logrus.Logger, stor storage.Storage) Server {
 
 	return Server{
 		c:  conf,
 		l:  log,
-		ws: &http.Server{Addr: conf.HttpListen, Handler: logRequest(ServeHTTP, log)},
+		s:  stor,
+		ws: &http.Server{Addr: conf.HttpListen, Handler: logRequest(ServeHTTP, log, stor)},
 	}
 }
 
@@ -57,7 +60,7 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //middleware logger
-func logRequest(h http.HandlerFunc, l *logrus.Logger) http.HandlerFunc {
+func logRequest(h http.HandlerFunc, l *logrus.Logger, s storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		l.Infoln(fmt.Sprintf("Income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
@@ -65,22 +68,32 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger) http.HandlerFunc {
 		l.Debugln("parser:", p, err)
 
 		uniqId := GenUniqIdForUrl(r.URL)
-
 		l.Infoln(fmt.Sprintf("Generate uniqId: %s for Url: %s", uniqId, r.URL.Path))
+		l.Debugln("Storage usage:", s.Usage())
 
-		resp, err := GetContext("https://"+p.RequestUrl, r.Header, nil)
+		cont, err := s.Get(uniqId)
 		if err != nil {
-			resp, err = GetContext("http://"+p.RequestUrl, r.Header, nil)
+			l.Infoln(fmt.Sprintf("Content for uniqId: %s, not found in cache", uniqId))
+		} else {
+			l.Infoln(fmt.Sprintf("Content for uniqId: %s, found in cache", uniqId))
+			w.Write(cont)
+			return
+		}
+
+		cont, err = GetContext("https://"+p.RequestUrl, r.Header, nil)
+		if err != nil {
+			cont, err = GetContext("http://"+p.RequestUrl, r.Header, nil)
 			if err != nil {
 				l.Warnln(err.Error())
 				//TODO check for error
 				w.Write([]byte(err.Error()))
-
 				return
 			}
 		}
+
 		//TODO check for error
-		w.Write(resp)
+		w.Write(cont)
+		s.Add(uniqId, cont)
 
 		h(w, r)
 	}
