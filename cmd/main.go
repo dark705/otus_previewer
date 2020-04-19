@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/dark705/otus_previewer/internal/dispatcher"
-	"github.com/dark705/otus_previewer/internal/storage"
+	"github.com/dark705/otus_previewer/internal/storage/inmemory"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,12 +14,12 @@ import (
 
 func main() {
 	conf := config.GetConfigFromEnv()
-
 	log := logger.NewLogger(logger.Config{
 		Level: conf.LogLevel,
 	})
 
-	stor := storage.New()
+	stor := inmemory.New()
+	//stor := disk.New(conf.CachePath)
 	storDis := dispatcher.New(&stor, conf.CacheSize, &log)
 
 	server := web.NewServer(web.Config{
