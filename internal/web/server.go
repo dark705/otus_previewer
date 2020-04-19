@@ -65,11 +65,12 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDisp
 
 		l.Infoln(fmt.Sprintf("Income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
 		p, err := ParseUrl(r.URL)
-		l.Debugln("parser:", p, err)
+		if err != nil {
+			w.Write([]byte(err.Error()))
+		}
 
 		uniqId := GenUniqIdForUrl(r.URL)
 		l.Infoln(fmt.Sprintf("Generate uniqId: %s for Url: %s", uniqId, r.URL.Path))
-		l.Debugln("Storage Dispatcher usage:", sd.Usage())
 
 		if sd.Exist(uniqId) {
 			l.Infoln(fmt.Sprintf("Content for uniqId: %s, found in cache", uniqId))
@@ -77,7 +78,7 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDisp
 			w.Write(cont)
 			return
 		}
-		l.Infoln(fmt.Sprintf("Content for uniqId: %s, not found in cache", uniqId))
+		l.Infoln(fmt.Sprintf("Content for uniqId: %s, not found in cache, need to dowload", uniqId))
 		cont, err := GetContext("https://"+p.RequestUrl, r.Header, nil)
 		if err != nil {
 			cont, err = GetContext("http://"+p.RequestUrl, r.Header, nil)
@@ -92,7 +93,6 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDisp
 		//TODO check for error
 		w.Write(cont)
 		sd.Add(uniqId, cont)
-		l.Debugln("Storage Dispatcher usage:", sd.Usage())
 
 		h(w, r)
 	}

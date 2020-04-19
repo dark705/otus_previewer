@@ -9,55 +9,63 @@ import (
 	"time"
 )
 
-type StorageDispatcher struct {
-	storage storage.Storage
-	lastUse map[string]time.Time
-	usage   int
-	limit   int
-	logger  *logrus.Logger
+type contentInfo struct {
+	size    int
+	lastUse time.Time
 }
 
-func New(st storage.Storage, lim int, l *logrus.Logger) StorageDispatcher {
-	lu := make(map[string]time.Time)
-	for _, id := range st.GetUniqId() {
-		lu[id] = time.Now()
+type StorageDispatcher struct {
+	storage          storage.Storage
+	contentState     map[string]contentInfo
+	totalContentSize int
+	limit            int
+	logger           *logrus.Logger
+}
+
+func New(storage storage.Storage, limit int, logger *logrus.Logger) StorageDispatcher {
+	state := make(map[string]contentInfo)
+	var totalSize int
+	for id, size := range storage.GetListSize() {
+		state[id] = contentInfo{size: size, lastUse: time.Now()}
+		totalSize += size
 	}
 
 	return StorageDispatcher{
-		storage: st,
-		lastUse: lu,
-		usage:   st.Usage(),
-		limit:   lim,
-		logger:  l,
+		storage:          storage,
+		contentState:     state,
+		totalContentSize: totalSize,
+		limit:            limit,
+		logger:           logger,
 	}
 }
 
-func (sd *StorageDispatcher) Usage() int {
-	return sd.usage
+func (sd *StorageDispatcher) TotalContentSize() int {
+	return sd.totalContentSize
 }
 
 func (sd *StorageDispatcher) Exist(id string) bool {
-	_, exist := sd.lastUse[id]
+	_, exist := sd.contentState[id]
 	return exist
 }
 
 func (sd *StorageDispatcher) Get(id string) ([]byte, error) {
-	_, exist := sd.lastUse[id]
+	_, exist := sd.contentState[id]
 	if !exist {
-		return nil, errors.New(fmt.Sprintf("Fail on update lastUse, content with id: %s not exist", id))
+		return nil, errors.New(fmt.Sprintf("Fail on update lastUse on get, content with id: %s not exist", id))
 	}
-	sd.lastUse[id] = time.Now()
+	sd.contentState[id] = contentInfo{size: sd.contentState[id].size, lastUse: time.Now()}
+	sd.logger.Debugln(fmt.Sprintf("Content with id: %s updated, last use time: %s", id, time.Now()))
 	return sd.storage.Get(id)
 }
 
 func (sd *StorageDispatcher) Add(id string, content []byte) error {
 	//storage not full
-	if sd.usage+len(content) < sd.limit {
+	if sd.totalContentSize+len(content) < sd.limit {
 		return sd.addAvailable(id, content)
 	}
 	//storage is full, need to clean,
-	sd.logger.Debugln(fmt.Sprintf("Storage is full, usage: %d need to clean", sd.Usage()))
-	err := sd.cleanOldUseOn(len(content))
+	sd.logger.Debugln(fmt.Sprintf("Storage is full, totalContentSize: %d need clean", sd.TotalContentSize()))
+	err := sd.cleanOldUseContentOn(len(content))
 	if err != nil {
 		return err
 	}
@@ -66,43 +74,40 @@ func (sd *StorageDispatcher) Add(id string, content []byte) error {
 }
 
 func (sd *StorageDispatcher) addAvailable(id string, content []byte) error {
-	sd.usage += len(content)
-	sd.lastUse[id] = time.Now()
-	sd.logger.Debugln(fmt.Sprintf("Storage not full, add content with id: %s, storage usage: %d", id, sd.Usage()))
+	sd.totalContentSize += len(content)
+	sd.contentState[id] = contentInfo{size: len(content), lastUse: time.Now()}
+	sd.logger.Debugln(fmt.Sprintf("Storage not full, add content with id: %s, size: %d, now total content size: %d", id, len(content), sd.TotalContentSize()))
 	return sd.storage.Add(id, content)
 }
 
-func (sd *StorageDispatcher) cleanOldUseOn(newContentLen int) error {
+func (sd *StorageDispatcher) cleanOldUseContentOn(needCleanBytes int) error {
 	//make sort, smaller index is more old at time
 	list := make([]struct {
 		i string
 		t time.Time
-	}, 0, len(sd.lastUse))
+	}, 0, len(sd.contentState))
 
-	for id, tm := range sd.lastUse {
+	for id, ci := range sd.contentState {
 		list = append(list, struct {
 			i string
 			t time.Time
-		}{i: id, t: tm})
+		}{i: id, t: ci.lastUse})
 	}
 
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].t.Before(list[j].t)
 	})
-
+	//delete old used content until free space for new content
 	for _, val := range list {
-		con, err := sd.storage.Get(val.i)
+		err := sd.storage.Del(val.i)
 		if err != nil {
 			return err
 		}
-		err = sd.storage.Del(val.i)
-		if err != nil {
-			return err
-		}
-		delete(sd.lastUse, val.i)
-		sd.usage -= len(con)
-		sd.logger.Debugln(fmt.Sprintf("Deleted content with id: %s, storage usage: %d", val.i, sd.usage))
-		if sd.usage+newContentLen < sd.limit {
+		usedSize := sd.contentState[val.i].size
+		sd.totalContentSize -= usedSize
+		delete(sd.contentState, val.i)
+		sd.logger.Debugln(fmt.Sprintf("Deleted content with id: %s, used size: %d", val.i, usedSize))
+		if sd.totalContentSize+needCleanBytes < sd.limit {
 			break
 		}
 	}

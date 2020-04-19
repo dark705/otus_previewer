@@ -39,18 +39,10 @@ func (s *InMemory) Get(id string) ([]byte, error) {
 	return s.storage[id], nil
 }
 
-func (s *InMemory) Usage() int {
-	var usage int
-	for _, c := range s.storage {
-		usage += len(c)
+func (s *InMemory) GetListSize() map[string]int {
+	usage := make(map[string]int, len(s.storage))
+	for id, c := range s.storage {
+		usage[id] = len(c)
 	}
 	return usage
-}
-
-func (s *InMemory) GetUniqId() []string {
-	uniqId := make([]string, 0, len(s.storage))
-	for id := range s.storage {
-		uniqId = append(uniqId, id)
-	}
-	return uniqId
 }
