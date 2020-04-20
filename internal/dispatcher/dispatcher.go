@@ -74,10 +74,14 @@ func (sd *StorageDispatcher) Add(id string, content []byte) error {
 }
 
 func (sd *StorageDispatcher) addAvailable(id string, content []byte) error {
+	err := sd.storage.Add(id, content)
+	if err != nil {
+		return err
+	}
 	sd.totalContentSize += len(content)
 	sd.contentState[id] = contentInfo{size: len(content), lastUse: time.Now()}
 	sd.logger.Debugln(fmt.Sprintf("Storage not full, add content with id: %s, size: %d, now total content size: %d", id, len(content), sd.TotalContentSize()))
-	return sd.storage.Add(id, content)
+	return nil
 }
 
 func (sd *StorageDispatcher) cleanOldUseContentOn(needCleanBytes int) error {
