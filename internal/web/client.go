@@ -4,12 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
+
+	"github.com/dark705/otus_previewer/internal/image"
 )
 
-func GetContext(url string, h http.Header, body io.Reader) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, body)
+func GetImage(proto string, url string, h http.Header, body io.Reader, limit int) ([]byte, error) {
+	req, err := http.NewRequest("GET", proto+url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +26,11 @@ func GetContext(url string, h http.Header, body io.Reader) ([]byte, error) {
 		return nil, errors.New(fmt.Sprintf("Wrong status code of remote server: %d", resp.StatusCode))
 	}
 
-	c, err := ioutil.ReadAll(resp.Body)
+	c, err := image.ReadImageContent(resp.Body, limit)
+	if err != nil {
+		return nil, err
+	}
+
 	err = resp.Body.Close()
 	if err != nil {
 		return nil, err

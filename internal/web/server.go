@@ -3,9 +3,10 @@ package web
 import (
 	"context"
 	"fmt"
-	"github.com/dark705/otus_previewer/internal/dispatcher"
 	"net/http"
 	"time"
+
+	"github.com/dark705/otus_previewer/internal/dispatcher"
 
 	"github.com/dark705/otus_previewer/internal/helpers"
 	"github.com/sirupsen/logrus"
@@ -19,7 +20,8 @@ type Server struct {
 }
 
 type Config struct {
-	HttpListen string
+	HttpListen       string
+	ImageMaxFileSize int
 }
 
 func NewServer(conf Config, log *logrus.Logger, sd *dispatcher.StorageDispatcher) Server {
@@ -28,7 +30,7 @@ func NewServer(conf Config, log *logrus.Logger, sd *dispatcher.StorageDispatcher
 		c:  conf,
 		l:  log,
 		sd: sd,
-		ws: &http.Server{Addr: conf.HttpListen, Handler: logRequest(ServeHTTP, log, sd)},
+		ws: &http.Server{Addr: conf.HttpListen, Handler: logRequest(ServeHTTP, log, sd, conf.ImageMaxFileSize)},
 	}
 }
 
@@ -60,7 +62,7 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //middleware logger
-func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDispatcher) http.HandlerFunc {
+func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDispatcher, imageLimit int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		l.Infoln(fmt.Sprintf("Income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
@@ -79,11 +81,12 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDisp
 			return
 		}
 		l.Infoln(fmt.Sprintf("Content for uniqId: %s, not found in cache, need to dowload", uniqId))
-		cont, err := GetContext("https://"+p.RequestUrl, r.Header, nil)
+		cont, err := GetImage("https://", p.RequestUrl, r.Header, nil, imageLimit)
 		if err != nil {
-			cont, err = GetContext("http://"+p.RequestUrl, r.Header, nil)
+			l.Warn(err.Error())
+			cont, err = GetImage("http://", p.RequestUrl, r.Header, nil, imageLimit)
 			if err != nil {
-				l.Warnln(err.Error())
+				l.Errorln(err.Error())
 				//TODO check for error
 				w.Write([]byte(err.Error()))
 				return

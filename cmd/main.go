@@ -21,7 +21,8 @@ func main() {
 	storDis := dispatcher.New(stor, conf.CacheSize, &log)
 
 	server := web.NewServer(web.Config{
-		HttpListen: conf.HttpListen,
+		HttpListen:       conf.HttpListen,
+		ImageMaxFileSize: conf.ImageMaxFileSize,
 	}, &log, &storDis)
 
 	server.RunServer()
