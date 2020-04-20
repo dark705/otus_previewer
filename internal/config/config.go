@@ -9,7 +9,7 @@ type Config struct {
 	LogLevel         string `env:"LOG_LEVEL" envDefault:"debug"`
 	HttpListen       string `env:"HTTP_LISTEN" envDefault:":8013"`
 	ImageMaxFileSize int    `env:"IMAGE_MAX_FILE_SIZE" envDefault:"324306"`
-	CacheSize        int    `env:"CACHE_SIZE" envDefault:"324307"`
+	CacheSize        int    `env:"CACHE_SIZE" envDefault:"10000000"`
 	CacheType        string `env:"CACHE_TYPE" envDefault:"inmemory"`
 	CachePath        string `env:"CACHE_TYPE" envDefault:"./cache"`
 }
