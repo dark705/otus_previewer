@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/dark705/otus_previewer/internal/dispatcher"
-	"github.com/dark705/otus_previewer/internal/storage"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/dark705/otus_previewer/internal/dispatcher"
+	"github.com/dark705/otus_previewer/internal/storage"
 
 	"github.com/dark705/otus_previewer/internal/config"
 	"github.com/dark705/otus_previewer/internal/logger"
@@ -14,6 +16,7 @@ import (
 
 func main() {
 	conf := config.GetConfigFromEnv()
+	fmt.Printf("Current settings: %+v\n", conf)
 	log := logger.NewLogger(logger.Config{
 		Level: conf.LogLevel,
 	})
