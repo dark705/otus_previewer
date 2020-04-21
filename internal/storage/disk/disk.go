@@ -2,10 +2,11 @@ package disk
 
 import (
 	"fmt"
-	"github.com/dark705/otus_previewer/internal/helpers"
-	errorsPack "github.com/pkg/errors"
 	"io/ioutil"
 	"os"
+
+	"github.com/dark705/otus_previewer/internal/helpers"
+	errorsPack "github.com/pkg/errors"
 )
 
 type Disk struct {
@@ -15,6 +16,11 @@ type Disk struct {
 var ignoreFiles = []string{".gitkeep"}
 
 func New(path string) Disk {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err = os.Mkdir(path, 0775)
+		helpers.FailOnError(err, "Fail to create cache directory")
+	}
+
 	return Disk{path: path + "/"}
 }
 
