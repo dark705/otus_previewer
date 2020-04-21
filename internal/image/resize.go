@@ -8,6 +8,7 @@ import (
 
 	"github.com/disintegration/imaging"
 
+	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
 )
@@ -49,6 +50,8 @@ func Resize(srcImageContent []byte, p ResizeConfig) ([]byte, error) {
 		err = imaging.Encode(&buf, destImage, imaging.PNG)
 	case "jpeg":
 		err = imaging.Encode(&buf, destImage, imaging.JPEG)
+	case "gif":
+		err = imaging.Encode(&buf, destImage, imaging.GIF)
 	default:
 		err = errors.New(fmt.Sprintf("Fail encode image, type: %s", ds))
 	}

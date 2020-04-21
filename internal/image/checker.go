@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var allowTypes = []string{"image/jpeg", "image/png"}
+var allowTypes = []string{"image/jpeg", "image/png", "image/gif"}
 
 func checkBytesIsImage(b []byte) error {
 	imageType := http.DetectContentType(b)
