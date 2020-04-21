@@ -34,7 +34,7 @@ func ParseUrl(url *url.URL) (p UrlParams, err error) {
 
 	//check and parse for allow services
 	ps[serviceIndex] = strings.ToLower(ps[serviceIndex])
-	err = errors.New(fmt.Sprintf("Invalid service type: %s. Allow types: %s", ps[1], strings.Join(allowServices, ", ")))
+	err = errors.New(fmt.Sprintf("Invalid service type: %s. Allow types: %s", ps[serviceIndex], strings.Join(allowServices, ", ")))
 	for _, t := range allowServices {
 		if t == ps[1] {
 			p.Service = ps[serviceIndex]
