@@ -17,7 +17,7 @@ import (
 type Server struct {
 	c  Config
 	l  *logrus.Logger
-	sd *dispatcher.StorageDispatcher
+	sd *dispatcher.ImageDispatcher
 	ws *http.Server
 }
 
@@ -26,7 +26,7 @@ type Config struct {
 	ImageMaxFileSize int
 }
 
-func NewServer(conf Config, log *logrus.Logger, sd *dispatcher.StorageDispatcher) Server {
+func NewServer(conf Config, log *logrus.Logger, sd *dispatcher.ImageDispatcher) Server {
 
 	return Server{
 		c:  conf,
@@ -64,7 +64,7 @@ func ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 //middleware logger
-func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDispatcher, imageLimit int) http.HandlerFunc {
+func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.ImageDispatcher, imageLimit int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		l.Infoln(fmt.Sprintf("Income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))

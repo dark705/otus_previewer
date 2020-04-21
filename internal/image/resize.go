@@ -39,7 +39,7 @@ func Resize(srcImageContent []byte, p ResizeConfig) ([]byte, error) {
 	case "fit":
 		destImage = imaging.Fit(srcImage, p.Width, p.Height, imaging.Lanczos)
 	default:
-		return nil, errors.New(fmt.Sprintf("Anknown action on image: %s", p.Action))
+		return nil, errors.New(fmt.Sprintf("Unknown action on image: %s", p.Action))
 	}
 
 	//encode

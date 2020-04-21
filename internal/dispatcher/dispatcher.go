@@ -3,115 +3,117 @@ package dispatcher
 import (
 	"errors"
 	"fmt"
-	"github.com/dark705/otus_previewer/internal/storage"
-	"github.com/sirupsen/logrus"
 	"sort"
 	"time"
+
+	"github.com/dark705/otus_previewer/internal/storage"
+	"github.com/sirupsen/logrus"
 )
 
-type contentInfo struct {
+type imageInfo struct {
 	size    int
 	lastUse time.Time
 }
 
-type StorageDispatcher struct {
-	storage          storage.Storage
-	contentState     map[string]contentInfo
-	totalContentSize int
-	limit            int
-	logger           *logrus.Logger
+type ImageDispatcher struct {
+	storage         storage.Storage
+	imageState      map[string]imageInfo
+	totalImagesSize int
+	maxLimit        int
+	logger          *logrus.Logger
 }
 
-func New(storage storage.Storage, limit int, logger *logrus.Logger) StorageDispatcher {
-	state := make(map[string]contentInfo)
+func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatcher {
+	state := make(map[string]imageInfo)
 	var totalSize int
 	for id, size := range storage.GetListSize() {
-		state[id] = contentInfo{size: size, lastUse: time.Now()}
+		state[id] = imageInfo{size: size, lastUse: time.Now()}
 		totalSize += size
 	}
 
-	return StorageDispatcher{
-		storage:          storage,
-		contentState:     state,
-		totalContentSize: totalSize,
-		limit:            limit,
-		logger:           logger,
+	return ImageDispatcher{
+		storage:         storage,
+		imageState:      state,
+		totalImagesSize: totalSize,
+		maxLimit:        limit,
+		logger:          logger,
 	}
 }
 
-func (sd *StorageDispatcher) TotalContentSize() int {
-	return sd.totalContentSize
+func (imDis *ImageDispatcher) TotalImageSize() int {
+	return imDis.totalImagesSize
 }
 
-func (sd *StorageDispatcher) Exist(id string) bool {
-	_, exist := sd.contentState[id]
+func (imDis *ImageDispatcher) Exist(id string) bool {
+	_, exist := imDis.imageState[id]
 	return exist
 }
 
-func (sd *StorageDispatcher) Get(id string) ([]byte, error) {
-	_, exist := sd.contentState[id]
+func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
+	_, exist := imDis.imageState[id]
 	if !exist {
-		return nil, errors.New(fmt.Sprintf("Fail on update lastUse on get, content with id: %s not exist", id))
+		return nil, errors.New(fmt.Sprintf("Fail on update lastUse on get, image with id: %s not exist", id))
 	}
-	sd.contentState[id] = contentInfo{size: sd.contentState[id].size, lastUse: time.Now()}
-	sd.logger.Debugln(fmt.Sprintf("Content with id: %s updated, last use time: %s", id, time.Now()))
-	return sd.storage.Get(id)
+	imDis.imageState[id] = imageInfo{size: imDis.imageState[id].size, lastUse: time.Now()}
+	imDis.logger.Debugln(fmt.Sprintf("Image with id: %s updated, last use time: %s", id, time.Now()))
+	return imDis.storage.Get(id)
 }
 
-func (sd *StorageDispatcher) Add(id string, content []byte) error {
+func (imDis *ImageDispatcher) Add(id string, image []byte) error {
 	//storage not full
-	if sd.totalContentSize+len(content) < sd.limit {
-		return sd.addAvailable(id, content)
+	if imDis.totalImagesSize+len(image) < imDis.maxLimit {
+		return imDis.addAvailable(id, image)
 	}
 	//storage is full, need to clean,
-	sd.logger.Debugln(fmt.Sprintf("Storage is full, totalContentSize: %d need clean", sd.TotalContentSize()))
-	err := sd.cleanOldUseContentOn(len(content))
+	imDis.logger.Debugln(fmt.Sprintf("Storage is full, totalImagesSize: %d, make clean", imDis.TotalImageSize()))
+	err := imDis.cleanOldUseImagesOn(len(image))
 	if err != nil {
 		return err
 	}
 	//now we can add
-	return sd.addAvailable(id, content)
+	return imDis.addAvailable(id, image)
 }
 
-func (sd *StorageDispatcher) addAvailable(id string, content []byte) error {
-	err := sd.storage.Add(id, content)
+func (imDis *ImageDispatcher) addAvailable(id string, image []byte) error {
+	err := imDis.storage.Add(id, image)
 	if err != nil {
 		return err
 	}
-	sd.totalContentSize += len(content)
-	sd.contentState[id] = contentInfo{size: len(content), lastUse: time.Now()}
-	sd.logger.Debugln(fmt.Sprintf("Storage not full, add content with id: %s, size: %d, now total content size: %d", id, len(content), sd.TotalContentSize()))
+	imDis.totalImagesSize += len(image)
+	imDis.imageState[id] = imageInfo{size: len(image), lastUse: time.Now()}
+	imDis.logger.Debugln(fmt.Sprintf("Storage not full, add image with id: %s, size: %d, now total images size: %d", id, len(image), imDis.TotalImageSize()))
 	return nil
 }
 
-func (sd *StorageDispatcher) cleanOldUseContentOn(needCleanBytes int) error {
-	//make sort, smaller index is more old at time
+func (imDis *ImageDispatcher) cleanOldUseImagesOn(needCleanBytes int) error {
+	//make sort images, smaller index is more old at time
 	list := make([]struct {
 		i string
 		t time.Time
-	}, 0, len(sd.contentState))
+	}, 0, len(imDis.imageState))
 
-	for id, ci := range sd.contentState {
+	for id, is := range imDis.imageState {
 		list = append(list, struct {
 			i string
 			t time.Time
-		}{i: id, t: ci.lastUse})
+		}{i: id, t: is.lastUse})
 	}
 
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].t.Before(list[j].t)
 	})
-	//delete old used content until free space for new content
+
+	//delete old used images until free space for new image
 	for _, val := range list {
-		err := sd.storage.Del(val.i)
+		err := imDis.storage.Del(val.i)
 		if err != nil {
 			return err
 		}
-		usedSize := sd.contentState[val.i].size
-		sd.totalContentSize -= usedSize
-		delete(sd.contentState, val.i)
-		sd.logger.Debugln(fmt.Sprintf("Deleted content with id: %s, used size: %d", val.i, usedSize))
-		if sd.totalContentSize+needCleanBytes < sd.limit {
+		usedSize := imDis.imageState[val.i].size
+		imDis.totalImagesSize -= usedSize
+		delete(imDis.imageState, val.i)
+		imDis.logger.Debugln(fmt.Sprintf("Deleted image with id: %s, used size: %d", val.i, usedSize))
+		if imDis.totalImagesSize+needCleanBytes < imDis.maxLimit {
 			break
 		}
 	}

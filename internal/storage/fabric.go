@@ -2,12 +2,13 @@ package storage
 
 import (
 	"fmt"
+
 	"github.com/dark705/otus_previewer/internal/storage/disk"
 	"github.com/dark705/otus_previewer/internal/storage/inmemory"
 	"github.com/sirupsen/logrus"
 )
 
-func CreateStorage(t, p string, l *logrus.Logger) Storage {
+func Create(t, p string, l *logrus.Logger) Storage {
 	switch t {
 	case "inmemory":
 		l.Info("Use operative memory as cache storage")
