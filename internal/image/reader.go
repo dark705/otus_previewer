@@ -4,13 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
-	"strings"
 )
 
-var allowTypes = []string{"image/jpeg", "image/png"}
-
-func ReadImageContent(r io.ReadCloser, limit int) ([]byte, error) {
+func ReadImageAsByte(r io.ReadCloser, limit int) ([]byte, error) {
 	defer r.Close()
 	var content []byte
 	offset := 0
@@ -21,7 +17,7 @@ func ReadImageContent(r io.ReadCloser, limit int) ([]byte, error) {
 		if err == io.EOF {
 			// on first step eol, check content is real image
 			if offset == 0 {
-				err := checkContentIsImage(buf[:read])
+				err := checkBytesIsImage(buf[:read])
 				if err != nil {
 					return nil, err
 				}
@@ -36,7 +32,7 @@ func ReadImageContent(r io.ReadCloser, limit int) ([]byte, error) {
 		}
 		//check content is real image
 		if offset == 0 {
-			err := checkContentIsImage(buf[:read])
+			err := checkBytesIsImage(buf[:read])
 			if err != nil {
 				return nil, err
 			}
@@ -44,14 +40,4 @@ func ReadImageContent(r io.ReadCloser, limit int) ([]byte, error) {
 		offset += read
 	}
 	return content, nil
-}
-
-func checkContentIsImage(b []byte) error {
-	imageType := http.DetectContentType(b)
-	for _, t := range allowTypes {
-		if t == imageType {
-			return nil
-		}
-	}
-	return errors.New(fmt.Sprintf("Invalid image type: %s. Allow types: %s", imageType, strings.Join(allowTypes, ", ")))
 }

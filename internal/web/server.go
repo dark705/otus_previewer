@@ -1,21 +1,17 @@
 package web
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"image"
+
 	"net/http"
 	"time"
 
 	"github.com/dark705/otus_previewer/internal/dispatcher"
-	"github.com/disintegration/imaging"
+	"github.com/dark705/otus_previewer/internal/image"
 
 	"github.com/dark705/otus_previewer/internal/helpers"
 	"github.com/sirupsen/logrus"
-
-	_ "image/jpeg"
-	_ "image/png"
 )
 
 type Server struct {
@@ -74,7 +70,9 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDisp
 		l.Infoln(fmt.Sprintf("Income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
 		p, err := ParseUrl(r.URL)
 		if err != nil {
+			l.Warnln(err)
 			w.Write([]byte(err.Error()))
+			return
 		}
 
 		uniqId := GenUniqIdForUrl(r.URL)
@@ -99,16 +97,19 @@ func logRequest(h http.HandlerFunc, l *logrus.Logger, sd *dispatcher.StorageDisp
 			}
 		}
 
-		//TODO move to package
-		srcIm, _, err := image.Decode(bytes.NewReader(cont))
-		im2 := imaging.Fill(srcIm, p.Width, p.Height, imaging.Center, imaging.Lanczos)
-
-		var buf bytes.Buffer
-		imaging.Encode(&buf, im2, imaging.JPEG)
-
-		//TODO check for error
-		w.Write(buf.Bytes())
-		sd.Add(uniqId, buf.Bytes())
+		resizedContent, err := image.Resize(cont, image.ResizeConfig{
+			Action: p.Service,
+			Width:  p.Width,
+			Height: p.Height,
+		})
+		if err != nil {
+			l.Errorln(err.Error())
+			//TODO check for error
+			w.Write([]byte(err.Error()))
+			return
+		}
+		sd.Add(uniqId, resizedContent)
+		w.Write(resizedContent)
 
 		h(w, r)
 	}

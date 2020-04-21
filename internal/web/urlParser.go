@@ -9,7 +9,7 @@ import (
 )
 
 type UrlParams struct {
-	Type       string
+	Service    string
 	Width      int
 	Height     int
 	RequestUrl string
@@ -17,11 +17,12 @@ type UrlParams struct {
 
 func ParseUrl(url *url.URL) (p UrlParams, err error) {
 	const (
+		serviceIndex  = 1
 		widthIndex    = 2
 		heightIndex   = 3
 		urlStartIndex = 4
 	)
-	var allowTypes = []string{"fill"}
+	var allowServices = []string{"fill", "resize", "fit"}
 
 	path := url.Path
 	p = UrlParams{}
@@ -31,28 +32,37 @@ func ParseUrl(url *url.URL) (p UrlParams, err error) {
 		return p, errors.New(fmt.Sprintf("Not enough params in path: %s", path))
 	}
 
-	for _, t := range allowTypes {
+	//check and parse for allow services
+	ps[serviceIndex] = strings.ToLower(ps[serviceIndex])
+	err = errors.New(fmt.Sprintf("Invalid service type: %s. Allow types: %s", ps[1], strings.Join(allowServices, ", ")))
+	for _, t := range allowServices {
 		if t == ps[1] {
-			p.Type = ps[1]
+			p.Service = ps[serviceIndex]
+			err = nil
 			break
 		}
-		return p, errors.New(fmt.Sprintf("Invalid type: %s. Allow types: %s", ps[0], strings.Join(allowTypes, ", ")))
+	}
+	if err != nil {
+		return p, err
 	}
 
+	//check and parse width
 	p.Width, err = strconv.Atoi(ps[widthIndex])
 	if err != nil || p.Width <= 0 {
 		return p, errors.New(fmt.Sprintf("Invalid Width: %s", ps[widthIndex]))
 	}
 
+	//check and parse height
 	p.Height, err = strconv.Atoi(ps[heightIndex])
 	if err != nil || p.Height <= 0 {
 		return p, errors.New(fmt.Sprintf("Invalid Height: %s", ps[heightIndex]))
 	}
 
+	//check and parse required remote url
 	p.RequestUrl = strings.Join(ps[urlStartIndex:], "/")
 	if ps[urlStartIndex] == "" || ps[urlStartIndex+1] == "" {
 		return p, errors.New(fmt.Sprintf("Invalid requst Url: %s", p.RequestUrl))
 	}
 
-	return p, err
+	return p, nil
 }

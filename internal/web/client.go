@@ -26,7 +26,7 @@ func GetImage(proto string, url string, h http.Header, body io.Reader, limit int
 		return nil, errors.New(fmt.Sprintf("Wrong status code of remote server: %d", resp.StatusCode))
 	}
 
-	c, err := image.ReadImageContent(resp.Body, limit)
+	c, err := image.ReadImageAsByte(resp.Body, limit)
 	if err != nil {
 		return nil, err
 	}
