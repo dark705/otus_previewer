@@ -39,7 +39,7 @@ func NewServer(conf Config, log *logrus.Logger, imageDispatcher *dispatcher.Imag
 
 func (s *Server) RunServer() {
 	go func() {
-		s.l.Infoln("Start HTTP server: ", s.c.HttpListen)
+		s.l.Infoln("Start HTTP server:", s.c.HttpListen)
 		err := s.ws.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			helpers.FailOnError(err, "Fail start HTTP Server")

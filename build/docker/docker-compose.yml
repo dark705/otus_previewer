@@ -1,0 +1,12 @@
+version: "3.7"
+services:
+  previewer:
+    build:
+      context: ../../
+      dockerfile: ./build//docker/previewer/Dockerfile
+    ports:
+      - "8013:8013"
+    volumes:
+      - ./../../cache:/app/cache
+    env_file:
+      - ./../../config/variables.example.env
