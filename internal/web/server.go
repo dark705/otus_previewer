@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"net/http"
 	"time"
@@ -15,10 +16,10 @@ import (
 )
 
 type Server struct {
-	c  Config
-	l  *logrus.Logger
-	sd *dispatcher.ImageDispatcher
-	ws *http.Server
+	c       Config
+	l       *logrus.Logger
+	ws      *http.Server
+	imgDisp *dispatcher.ImageDispatcher
 }
 
 type Config struct {
@@ -26,13 +27,13 @@ type Config struct {
 	ImageMaxFileSize int
 }
 
-func NewServer(conf Config, log *logrus.Logger, sd *dispatcher.ImageDispatcher) Server {
-
+func NewServer(conf Config, log *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher) Server {
+	m := sync.Mutex{}
 	return Server{
-		c:  conf,
-		l:  log,
-		sd: sd,
-		ws: &http.Server{Addr: conf.HttpListen, Handler: handlerRequest(log, sd, conf.ImageMaxFileSize)},
+		c:       conf,
+		l:       log,
+		ws:      &http.Server{Addr: conf.HttpListen, Handler: handlerRequest(log, imageDispatcher, conf.ImageMaxFileSize, m)},
+		imgDisp: imageDispatcher,
 	}
 }
 
@@ -58,7 +59,7 @@ func (s *Server) Shutdown() {
 	s.l.Infoln("Success Shutdown HTTP server")
 }
 
-func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int) http.HandlerFunc {
+func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int, mu sync.Mutex) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Server", "Previewer")
 
@@ -79,9 +80,11 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		l.Infoln(fmt.Sprintf("Generate uniq reqId: %s for Url: %s", uniqId, r.URL.Path))
 
 		//Image found in cache
+		mu.Lock()
 		if imDis.Exist(uniqId) {
 			l.Infoln(fmt.Sprintf("Image for uniqId: %s, found in cache", uniqId))
 			resp, err := imDis.Get(uniqId)
+			mu.Unlock()
 			if err != nil {
 				l.Errorln(err)
 				resp = []byte("Internal server error")
@@ -92,6 +95,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 			}
 			return
 		}
+		mu.Unlock()
 
 		//Image not fount in cache, need download
 		l.Infoln(fmt.Sprintf("Image for uniq reqId: %s, not found in cache, need to dowload", uniqId))
@@ -136,7 +140,9 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		}
 
 		//save to cache
+		mu.Lock()
 		err = imDis.Add(uniqId, convertedImage)
+		mu.Unlock()
 		if err != nil {
 			l.Errorln(err)
 		}
