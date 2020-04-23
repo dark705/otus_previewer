@@ -40,7 +40,7 @@ func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatc
 	}
 }
 
-func (imDis *ImageDispatcher) TotalImageSize() int {
+func (imDis *ImageDispatcher) TotalImagesSize() int {
 	return imDis.totalImagesSize
 }
 
@@ -61,11 +61,11 @@ func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
 
 func (imDis *ImageDispatcher) Add(id string, image []byte) error {
 	//storage not full
-	if imDis.totalImagesSize+len(image) < imDis.maxLimit {
+	if imDis.totalImagesSize+len(image) <= imDis.maxLimit {
 		return imDis.addAvailable(id, image)
 	}
 	//storage is full, need to clean,
-	imDis.logger.Debugln(fmt.Sprintf("Storage is full, totalImagesSize: %d, make clean", imDis.TotalImageSize()))
+	imDis.logger.Debugln(fmt.Sprintf("Storage is full, totalImagesSize: %d, make clean", imDis.TotalImagesSize()))
 	err := imDis.cleanOldUseImagesOn(len(image))
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (imDis *ImageDispatcher) addAvailable(id string, image []byte) error {
 	}
 	imDis.totalImagesSize += len(image)
 	imDis.imageState[id] = imageInfo{size: len(image), lastUse: time.Now()}
-	imDis.logger.Debugln(fmt.Sprintf("Storage not full, add image with id: %s, size: %d, now total images size: %d", id, len(image), imDis.TotalImageSize()))
+	imDis.logger.Debugln(fmt.Sprintf("Storage not full, add image with id: %s, size: %d, now total images size: %d", id, len(image), imDis.TotalImagesSize()))
 	return nil
 }
 
@@ -113,7 +113,7 @@ func (imDis *ImageDispatcher) cleanOldUseImagesOn(needCleanBytes int) error {
 		imDis.totalImagesSize -= usedSize
 		delete(imDis.imageState, val.i)
 		imDis.logger.Debugln(fmt.Sprintf("Deleted image with id: %s, used size: %d", val.i, usedSize))
-		if imDis.totalImagesSize+needCleanBytes < imDis.maxLimit {
+		if imDis.totalImagesSize+needCleanBytes <= imDis.maxLimit {
 			break
 		}
 	}
