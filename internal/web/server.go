@@ -68,10 +68,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		p, err := ParseUrl(r.URL)
 		if err != nil {
 			l.Warnln(err)
-			_, err = w.Write([]byte(err.Error()))
-			if err != nil {
-				l.Errorln(err)
-			}
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -87,7 +84,8 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 			mu.Unlock()
 			if err != nil {
 				l.Errorln(err)
-				resp = []byte("Internal server error")
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
 			_, err = w.Write(resp)
 			if err != nil {
@@ -126,10 +124,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		})
 		if err != nil {
 			l.Errorln(err.Error())
-			_, err := w.Write([]byte(err.Error()))
-			if err != nil {
-				l.Errorln(err)
-			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
