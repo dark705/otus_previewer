@@ -7,7 +7,6 @@ import (
 )
 
 func ReadImageAsByte(r io.ReadCloser, limit int) ([]byte, error) {
-	defer r.Close()
 	var content []byte
 	offset := 0
 	buf := make([]byte, 1024)

@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"sync"
 
 	"net/http"
@@ -97,22 +98,44 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 
 		//Image not fount in cache, need download
 		l.Infoln(fmt.Sprintf("Image for uniq reqId: %s, not found in cache, need to dowload", uniqId))
-		var im []byte
-		var errHttps, errHttp error
 		//first try https
-		im, errHttps = GetImageAsBytes("https://", p.RequestUrl, r.Header, nil, imageLimit)
-		if errHttps != nil {
-			l.Warnln(errHttps.Error())
+		resp, err := makeRequest("https://", p.RequestUrl, r.Header, nil, imageLimit)
+		if err != nil {
+			l.Warnln(err)
 			//if some error, try http
-			im, errHttp = GetImageAsBytes("http://", p.RequestUrl, r.Header, nil, imageLimit)
-			if errHttp != nil {
-				l.Warnln(errHttp.Error())
-				_, err := w.Write([]byte(errHttps.Error() + "\n" + errHttp.Error()))
-				if err != nil {
-					l.Errorln(err)
-				}
+			resp, err = makeRequest("http://", p.RequestUrl, r.Header, nil, imageLimit)
+			if err != nil {
+				l.Warnln(err)
+				http.Error(w, err.Error(), http.StatusBadGateway)
 				return
 			}
+		}
+		//If remote server response not StatusOk, proxy response to client with status, headers and body
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, err := ioutil.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			if err != nil {
+				l.Errorln(err)
+			}
+			l.Warnln(fmt.Sprintf("Remote server for url: %s return status: %d ", p.RequestUrl, resp.StatusCode))
+			for h, v := range resp.Header {
+				w.Header().Set(h, v[0])
+			}
+			w.WriteHeader(resp.StatusCode)
+			_, err = w.Write(bodyBytes)
+			if err != nil {
+				l.Errorln(err)
+			}
+			return
+		}
+
+		//Status Ok, read response as image
+		im, err := image.ReadImageAsByte(resp.Body, imageLimit)
+		_ = resp.Body.Close()
+		if err != nil {
+			l.Warnln(err)
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
 		}
 
 		//Downloaded image as byte, make convert
@@ -123,7 +146,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 			Height: p.Height,
 		})
 		if err != nil {
-			l.Errorln(err.Error())
+			l.Errorln(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
