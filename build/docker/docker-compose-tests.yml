@@ -8,8 +8,13 @@ services:
       - "8013:8013"
     volumes:
       - ./../../cache:/app/cache
-    env_file:
-      - ./../../config/variables.example.env
+    environment:
+      - LOG_LEVEL=error
+      - HTTP_LISTEN=:8013
+      - IMAGE_MAX_FILE_SIZE=1000000
+      - CACHE_SIZE=100000000
+      - CACHE_TYPE=disk
+      - CACHE_TYPE=./cache
     depends_on:
       - nginx
   nginx:
