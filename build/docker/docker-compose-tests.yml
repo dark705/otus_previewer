@@ -1,0 +1,30 @@
+version: "3.7"
+services:
+  previewer:
+    build:
+      context: ../../
+      dockerfile: ./build//docker/previewer/Dockerfile
+    ports:
+      - "8013:8013"
+    volumes:
+      - ./../../cache:/app/cache
+    env_file:
+      - ./../../config/variables.example.env
+    depends_on:
+      - nginx
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8014:80"
+      - "44314:443"
+    volumes:
+      - ./../../tests/html:/usr/share/nginx/html
+  tests:
+    image: golang:1.14
+    volumes:
+      - ./../../tests/go:/tests
+    command: sh -c 'cd /tests && sleep 2 && go test -v'
+    depends_on:
+      - previewer
+
+
