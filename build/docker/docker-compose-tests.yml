@@ -22,6 +22,8 @@ services:
       - "44314:443"
     volumes:
       - ./../../tests/html:/usr/share/nginx/html
+    logging:
+      driver: none
   tests:
     image: golang:1.14
     volumes:
