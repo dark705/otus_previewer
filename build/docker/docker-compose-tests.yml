@@ -4,8 +4,6 @@ services:
     build:
       context: ../../
       dockerfile: ./build//docker/previewer/Dockerfile
-    ports:
-      - "8013:8013"
     environment:
       - LOG_LEVEL=error
       - HTTP_LISTEN=:8013
@@ -17,9 +15,6 @@ services:
       - nginx
   nginx:
     image: nginx:alpine
-    ports:
-      - "8014:80"
-      - "44314:443"
     volumes:
       - ./../../tests/html:/usr/share/nginx/html
     logging:
