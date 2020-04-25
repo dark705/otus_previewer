@@ -60,7 +60,7 @@ func TestTotalImagesSize(t *testing.T) {
 
 func TestTotalImagesSizeNotBiggerThenLimit(t *testing.T) {
 	image := []byte("GIF89a,...") //len 10 bytes
-	countImages := 100000
+	countImages := 1000
 	cacheSizeLimit := 400
 	storage := inmemory.New()
 	imageDispatcher := New(&storage, cacheSizeLimit, &logrus.Logger{})
@@ -99,7 +99,9 @@ func TestLeastRecentUsed(t *testing.T) {
 
 	//now storage is full
 	//get image2, image1, last Recent use updated
+	time.Sleep(time.Nanosecond) //windows fix
 	_, _ = imageDispatcher.Get(uniqId2)
+	time.Sleep(time.Nanosecond) //windows fix
 	_, _ = imageDispatcher.Get(uniqId1)
 
 	//add image4, it must replace image3
@@ -127,6 +129,7 @@ func TestLeastRecentUsed(t *testing.T) {
 }
 
 func genUniqId() string {
+	time.Sleep(time.Nanosecond) //windows fix
 	b := sha256.Sum256([]byte(time.Now().String()))
 	return hex.EncodeToString(b[:])
 }
