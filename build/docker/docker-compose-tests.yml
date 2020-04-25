@@ -6,8 +6,6 @@ services:
       dockerfile: ./build//docker/previewer/Dockerfile
     ports:
       - "8013:8013"
-    volumes:
-      - ./../../cache:/app/cache
     environment:
       - LOG_LEVEL=error
       - HTTP_LISTEN=:8013
