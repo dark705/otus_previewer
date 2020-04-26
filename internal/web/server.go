@@ -21,6 +21,7 @@ type Server struct {
 	l       *logrus.Logger
 	ws      *http.Server
 	imgDisp *dispatcher.ImageDispatcher
+	mu      *sync.Mutex
 }
 
 type Config struct {
@@ -33,8 +34,9 @@ func NewServer(conf Config, log *logrus.Logger, imageDispatcher *dispatcher.Imag
 	return Server{
 		c:       conf,
 		l:       log,
-		ws:      &http.Server{Addr: conf.HTTPListen, Handler: handlerRequest(log, imageDispatcher, conf.ImageMaxFileSize, m)},
+		ws:      &http.Server{Addr: conf.HTTPListen, Handler: handlerRequest(log, imageDispatcher, conf.ImageMaxFileSize, &m)},
 		imgDisp: imageDispatcher,
+		mu:      &m,
 	}
 }
 
@@ -61,7 +63,7 @@ func (s *Server) Shutdown() {
 	ch()
 }
 
-func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int, mu sync.Mutex) http.HandlerFunc {
+func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int, mu *sync.Mutex) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Server", "Previewer")
 
