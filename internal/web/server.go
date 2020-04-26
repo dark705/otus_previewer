@@ -50,13 +50,15 @@ func (s *Server) RunServer() {
 
 func (s *Server) Shutdown() {
 	s.l.Infoln("shutdown HTTP server... ")
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, ch := context.WithTimeout(context.Background(), time.Second*10)
 	err := s.ws.Shutdown(ctx)
 	if err != nil {
 		s.l.Errorln("fail Shutdown HTTP server")
+		ch()
 		return
 	}
 	s.l.Infoln("success Shutdown HTTP server")
+	ch()
 }
 
 func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int, mu sync.Mutex) http.HandlerFunc {
