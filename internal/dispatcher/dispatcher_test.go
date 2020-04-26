@@ -1,4 +1,4 @@
-package dispatcher
+package dispatcher_test
 
 import (
 	"bytes"
@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dark705/otus_previewer/internal/dispatcher"
 	"github.com/dark705/otus_previewer/internal/storage/inmemory"
 	"github.com/sirupsen/logrus"
 )
 
 func TestAddGetSame(t *testing.T) {
 	storage := inmemory.New()
-	imgDispatcher := New(&storage, 10, &logrus.Logger{})
+	imgDispatcher := dispatcher.New(&storage, 10, &logrus.Logger{})
 	image := []byte("GIF89a,...") //len 10 bytes
 	uniqID := genUniqID()
 
@@ -44,7 +45,7 @@ func TestTotalImagesSize(t *testing.T) {
 	countImages := 10
 	cacheSizeLimit := 100000000000000
 	storage := inmemory.New()
-	imageDispatcher := New(&storage, cacheSizeLimit, &logrus.Logger{})
+	imageDispatcher := dispatcher.New(&storage, cacheSizeLimit, &logrus.Logger{})
 
 	for i := 0; i < countImages; i++ {
 		err := imageDispatcher.Add(genUniqID(), image)
@@ -63,7 +64,7 @@ func TestTotalImagesSizeNotBiggerThenLimit(t *testing.T) {
 	countImages := 1000
 	cacheSizeLimit := 400
 	storage := inmemory.New()
-	imageDispatcher := New(&storage, cacheSizeLimit, &logrus.Logger{})
+	imageDispatcher := dispatcher.New(&storage, cacheSizeLimit, &logrus.Logger{})
 
 	for i := 0; i < countImages; i++ {
 		err := imageDispatcher.Add(genUniqID(), image)
@@ -83,7 +84,7 @@ func TestLeastRecentUsed(t *testing.T) {
 	cacheSizeLimit := 30
 
 	storage := inmemory.New()
-	imageDispatcher := New(&storage, cacheSizeLimit, &logrus.Logger{})
+	imageDispatcher := dispatcher.New(&storage, cacheSizeLimit, &logrus.Logger{})
 
 	//add image1
 	uniqID1 := genUniqID()
