@@ -1,0 +1,10 @@
+language: go
+go:
+  - "1.14"
+install:
+  - "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.25.0"
+script:
+  - "golangci-lint run"
+  - "go test -v ./..."
+  - "make test"
+  - "make"

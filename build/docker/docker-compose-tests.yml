@@ -23,7 +23,7 @@ services:
     image: golang:1.14
     volumes:
       - ./../../tests/go:/tests
-    command: sh -c 'cd /tests && sleep 2 && go test -v'
+    command: sh -c 'cd /tests && sleep 2 && go test -v -tags=integration'
     depends_on:
       - previewer
 
