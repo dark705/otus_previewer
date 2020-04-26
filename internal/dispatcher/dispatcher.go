@@ -1,7 +1,6 @@
 package dispatcher
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -52,7 +51,7 @@ func (imDis *ImageDispatcher) Exist(id string) bool {
 func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
 	_, exist := imDis.imageState[id]
 	if !exist {
-		return nil, errors.New(fmt.Sprintf("Fail on update lastUse on get, image with id: %s not exist", id))
+		return nil, fmt.Errorf("Fail on update lastUse on get, image with id: %s not exist", id)
 	}
 	imDis.imageState[id] = imageInfo{size: imDis.imageState[id].size, lastUse: time.Now()}
 	imDis.logger.Debugln(fmt.Sprintf("Image with id: %s updated, last use time: %s", id, time.Now()))

@@ -1,7 +1,6 @@
 package image
 
 import (
-	"errors"
 	"fmt"
 	"io"
 )
@@ -27,7 +26,7 @@ func ReadImageAsByte(r io.ReadCloser, limit int) ([]byte, error) {
 			return nil, err
 		}
 		if offset+read > limit {
-			return nil, errors.New(fmt.Sprintf("Requested image is bigger limit: %d", limit))
+			return nil, fmt.Errorf("Requested image is bigger limit: %d", limit)
 		}
 		//check content is real image
 		if offset == 0 {

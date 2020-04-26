@@ -24,7 +24,7 @@ func main() {
 	imageDispatcher := dispatcher.New(st, conf.CacheSize, &log)
 
 	server := web.NewServer(web.Config{
-		HttpListen:       conf.HttpListen,
+		HTTPListen:       conf.HTTPListen,
 		ImageMaxFileSize: conf.ImageMaxFileSize,
 	}, &log, &imageDispatcher)
 

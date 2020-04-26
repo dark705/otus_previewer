@@ -1,7 +1,6 @@
 package inmemory
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -16,7 +15,7 @@ func New() InMemory {
 func (s *InMemory) Add(id string, content []byte) error {
 	_, exist := s.storage[id]
 	if exist {
-		return errors.New(fmt.Sprintf("Fail on Add, content with id: %s already exist", id))
+		return fmt.Errorf("Fail on Add, content with id: %s already exist", id)
 	}
 	s.storage[id] = content
 	return nil
@@ -25,7 +24,7 @@ func (s *InMemory) Add(id string, content []byte) error {
 func (s *InMemory) Del(id string) error {
 	_, exist := s.storage[id]
 	if !exist {
-		return errors.New(fmt.Sprintf("Fail on Del, content with id: %s not exist", id))
+		return fmt.Errorf("Fail on Del, content with id: %s not exist", id)
 	}
 	delete(s.storage, id)
 	return nil
@@ -34,7 +33,7 @@ func (s *InMemory) Del(id string) error {
 func (s *InMemory) Get(id string) ([]byte, error) {
 	_, exist := s.storage[id]
 	if !exist {
-		return nil, errors.New(fmt.Sprintf("Fail on Get, content with id: %s not exist", id))
+		return nil, fmt.Errorf("Fail on Get, content with id: %s not exist", id)
 	}
 	return s.storage[id], nil
 }

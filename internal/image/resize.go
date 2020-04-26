@@ -2,15 +2,14 @@ package image
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"image"
 
 	"github.com/disintegration/imaging"
 
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
+	_ "image/gif"  // Register some gif support
+	_ "image/jpeg" // Register some jpeg support
+	_ "image/png"  // Register some png support
 )
 
 type ResizeConfig struct {
@@ -40,7 +39,7 @@ func Resize(srcImageContent []byte, p ResizeConfig) ([]byte, error) {
 	case "fit":
 		destImage = imaging.Fit(srcImage, p.Width, p.Height, imaging.Lanczos)
 	default:
-		return nil, errors.New(fmt.Sprintf("Unknown action on image: %s", p.Action))
+		return nil, fmt.Errorf("Unknown action on image: %s", p.Action)
 	}
 
 	//encode
@@ -53,7 +52,7 @@ func Resize(srcImageContent []byte, p ResizeConfig) ([]byte, error) {
 	case "gif":
 		err = imaging.Encode(&buf, destImage, imaging.GIF)
 	default:
-		err = errors.New(fmt.Sprintf("Fail encode image, type: %s", ds))
+		err = fmt.Errorf("Fail encode image, type: %s", ds)
 	}
 	if err != nil {
 		return nil, err

@@ -1,21 +1,20 @@
 package web
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
 )
 
-type UrlParams struct {
+type URLParams struct {
 	Service    string
 	Width      int
 	Height     int
-	RequestUrl string
+	RequestURL string
 }
 
-func ParseUrl(url *url.URL) (p UrlParams, err error) {
+func ParseURL(url *url.URL) (p URLParams, err error) {
 	const (
 		serviceIndex  = 1
 		widthIndex    = 2
@@ -25,16 +24,16 @@ func ParseUrl(url *url.URL) (p UrlParams, err error) {
 	var allowServices = []string{"fill", "resize", "fit"}
 
 	path := url.Path
-	p = UrlParams{}
+	p = URLParams{}
 	ps := strings.Split(path, "/")
 
 	if len(ps) <= 5 {
-		return p, errors.New(fmt.Sprintf("Not enough params in path: %s", path))
+		return p, fmt.Errorf("Not enough params in path: %s", path)
 	}
 
 	//check and parse for allow services
 	ps[serviceIndex] = strings.ToLower(ps[serviceIndex])
-	err = errors.New(fmt.Sprintf("Invalid service type: %s. Allow types: %s", ps[serviceIndex], strings.Join(allowServices, ", ")))
+	err = fmt.Errorf("Invalid service type: %s. Allow types: %s", ps[serviceIndex], strings.Join(allowServices, ", "))
 	for _, t := range allowServices {
 		if t == ps[1] {
 			p.Service = ps[serviceIndex]
@@ -49,19 +48,19 @@ func ParseUrl(url *url.URL) (p UrlParams, err error) {
 	//check and parse width
 	p.Width, err = strconv.Atoi(ps[widthIndex])
 	if err != nil || p.Width <= 0 {
-		return p, errors.New(fmt.Sprintf("Invalid Width: %s", ps[widthIndex]))
+		return p, fmt.Errorf("Invalid Width: %s", ps[widthIndex])
 	}
 
 	//check and parse height
 	p.Height, err = strconv.Atoi(ps[heightIndex])
 	if err != nil || p.Height <= 0 {
-		return p, errors.New(fmt.Sprintf("Invalid Height: %s", ps[heightIndex]))
+		return p, fmt.Errorf("Invalid Height: %s", ps[heightIndex])
 	}
 
 	//check and parse required remote url
-	p.RequestUrl = strings.Join(ps[urlStartIndex:], "/")
+	p.RequestURL = strings.Join(ps[urlStartIndex:], "/")
 	if ps[urlStartIndex] == "" || ps[urlStartIndex+1] == "" {
-		return p, errors.New(fmt.Sprintf("Invalid requst Url: %s", p.RequestUrl))
+		return p, fmt.Errorf("Invalid requst Url: %s", p.RequestURL)
 	}
 
 	return p, nil
