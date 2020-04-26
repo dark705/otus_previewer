@@ -98,11 +98,11 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		//Image not fount in cache, need download
 		l.Infoln(fmt.Sprintf("Image for uniq reqId: %s, not found in cache, need to dowload", uniqID))
 		//first try https
-		resp, err := makeRequest("https://", p.RequestURL, r.Header, nil, imageLimit)
+		resp, err := makeRequest("https://", p.RequestURL, r.Header, nil)
 		if err != nil {
 			l.Warnln(err)
 			//if some error, try http
-			resp, err = makeRequest("http://", p.RequestURL, r.Header, nil, imageLimit)
+			resp, err = makeRequest("http://", p.RequestURL, r.Header, nil)
 			if err != nil {
 				l.Warnln(err)
 				http.Error(w, err.Error(), http.StatusBadGateway)

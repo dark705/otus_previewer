@@ -23,14 +23,19 @@ func TestServiceType(t *testing.T) {
 		t.Error("No error on wrong url service")
 	}
 
-	p1, err := ParseURL(&url.URL{Path: "/fill/300/200/some_site.com/image.jpeg"})
-	p2, err := ParseURL(&url.URL{Path: "/resize/300/200/some_site.com/image.jpeg"})
-	p3, err := ParseURL(&url.URL{Path: "/fit/300/200/some_site.com/image.jpeg"})
-	if err != nil ||
-		p1.Service != "fill" ||
-		p2.Service != "resize" ||
-		p3.Service != "fit" {
-		t.Error("Error on correct url service")
+	p, err := ParseURL(&url.URL{Path: "/fill/300/200/some_site.com/image.jpeg"})
+	if err != nil || p.Service != "fill" {
+		t.Error("Error on correct url service fill ")
+	}
+
+	p, err = ParseURL(&url.URL{Path: "/resize/300/200/some_site.com/image.jpeg"})
+	if err != nil || p.Service != "resize" {
+		t.Error("Error on correct url service resize")
+	}
+
+	p, err = ParseURL(&url.URL{Path: "/fit/300/200/some_site.com/image.jpeg"})
+	if err != nil || p.Service != "fit" {
+		t.Error("Error on correct url service fit")
 	}
 }
 

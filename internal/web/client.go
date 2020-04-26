@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func makeRequest(proto string, url string, h http.Header, body io.Reader, limit int) (*http.Response, error) {
+func makeRequest(proto string, url string, h http.Header, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest("GET", proto+url, body)
 	if err != nil {
 		return nil, err
