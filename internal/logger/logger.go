@@ -24,7 +24,6 @@ func NewLogger(c Config) logrus.Logger {
 		fallthrough
 	default:
 		logger.SetLevel(logrus.DebugLevel)
-
 	}
 
 	formatter := logrus.JSONFormatter{}

@@ -46,7 +46,6 @@ func (s *Server) RunServer() {
 			helpers.FailOnError(err, "Fail start HTTP Server")
 		}
 	}()
-
 }
 
 func (s *Server) Shutdown() {

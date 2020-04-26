@@ -32,8 +32,7 @@ func main() {
 	defer server.Shutdown()
 
 	osSignals := make(chan os.Signal, 1)
-	signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM)
 
 	log.Infof("Got signal from OS: %v. Exit...", <-osSignals)
-
 }

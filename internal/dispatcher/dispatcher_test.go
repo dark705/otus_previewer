@@ -16,20 +16,20 @@ func TestAddGetSame(t *testing.T) {
 	storage := inmemory.New()
 	imgDispatcher := New(&storage, 10, &logrus.Logger{})
 	image := []byte("GIF89a,...") //len 10 bytes
-	uniqId := genUniqId()
+	uniqID := genUniqID()
 
-	err := imgDispatcher.Add(uniqId, image)
+	err := imgDispatcher.Add(uniqID, image)
 	if err != nil {
 		t.Error("Fail on add image", err)
 	}
 
-	if !imgDispatcher.Exist(uniqId) {
+	if !imgDispatcher.Exist(uniqID) {
 		if err != nil {
 			t.Error("Fail, added image do not exist")
 		}
 	}
 
-	imageGet, err := imgDispatcher.Get(uniqId)
+	imageGet, err := imgDispatcher.Get(uniqID)
 	if err != nil {
 		t.Error("Fail on get image", err)
 	}
@@ -47,7 +47,7 @@ func TestTotalImagesSize(t *testing.T) {
 	imageDispatcher := New(&storage, cacheSizeLimit, &logrus.Logger{})
 
 	for i := 0; i < countImages; i++ {
-		err := imageDispatcher.Add(genUniqId(), image)
+		err := imageDispatcher.Add(genUniqID(), image)
 		if err != nil {
 			t.Error("Fail on add image", err)
 		}
@@ -66,7 +66,7 @@ func TestTotalImagesSizeNotBiggerThenLimit(t *testing.T) {
 	imageDispatcher := New(&storage, cacheSizeLimit, &logrus.Logger{})
 
 	for i := 0; i < countImages; i++ {
-		err := imageDispatcher.Add(genUniqId(), image)
+		err := imageDispatcher.Add(genUniqID(), image)
 		if err != nil {
 			t.Error("Fail on add image", err)
 		}
@@ -86,49 +86,49 @@ func TestLeastRecentUsed(t *testing.T) {
 	imageDispatcher := New(&storage, cacheSizeLimit, &logrus.Logger{})
 
 	//add image1
-	uniqId1 := genUniqId()
-	_ = imageDispatcher.Add(uniqId1, image)
+	uniqID1 := genUniqID()
+	_ = imageDispatcher.Add(uniqID1, image)
 
 	//add image2
-	uniqId2 := genUniqId()
-	_ = imageDispatcher.Add(uniqId2, image)
+	uniqID2 := genUniqID()
+	_ = imageDispatcher.Add(uniqID2, image)
 
 	//add image3
-	uniqId3 := genUniqId()
-	_ = imageDispatcher.Add(uniqId3, image)
+	uniqID3 := genUniqID()
+	_ = imageDispatcher.Add(uniqID3, image)
 
 	//now storage is full
 	//get image2, image1, last Recent use updated
 	time.Sleep(time.Nanosecond) //windows fix
-	_, _ = imageDispatcher.Get(uniqId2)
+	_, _ = imageDispatcher.Get(uniqID2)
 	time.Sleep(time.Nanosecond) //windows fix
-	_, _ = imageDispatcher.Get(uniqId1)
+	_, _ = imageDispatcher.Get(uniqID1)
 
 	//add image4, it must replace image3
-	uniqId4 := genUniqId()
-	_ = imageDispatcher.Add(uniqId4, image)
+	uniqID4 := genUniqID()
+	_ = imageDispatcher.Add(uniqID4, image)
 
-	if imageDispatcher.Exist(uniqId3) {
+	if imageDispatcher.Exist(uniqID3) {
 		t.Error("Image 3 exists but should not")
 	}
 
 	//add image5, it must replace image2
-	uniqId5 := genUniqId()
-	_ = imageDispatcher.Add(uniqId5, image)
+	uniqID5 := genUniqID()
+	_ = imageDispatcher.Add(uniqID5, image)
 
-	if imageDispatcher.Exist(uniqId2) {
+	if imageDispatcher.Exist(uniqID2) {
 		t.Error("Image 2 exists but should not")
 	}
 
 	//now 3 in storage images: 5,4,1
-	if !imageDispatcher.Exist(uniqId5) ||
-		!imageDispatcher.Exist(uniqId4) ||
-		!imageDispatcher.Exist(uniqId1) {
+	if !imageDispatcher.Exist(uniqID5) ||
+		!imageDispatcher.Exist(uniqID4) ||
+		!imageDispatcher.Exist(uniqID1) {
 		t.Error("Expected images not exist")
 	}
 }
 
-func genUniqId() string {
+func genUniqID() string {
 	time.Sleep(time.Nanosecond) //windows fix
 	b := sha256.Sum256([]byte(time.Now().String()))
 	return hex.EncodeToString(b[:])
