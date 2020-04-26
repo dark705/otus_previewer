@@ -15,7 +15,7 @@ func checkBytesIsImage(b []byte) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Invalid image type: %s. Allow types: %s", imageType, strings.Join(allowTypes, ", "))
+	return fmt.Errorf("invalid image type: %s. Allow types: %s", imageType, strings.Join(allowTypes, ", "))
 }
 
 func checkDecodedStringIsImage(decodedImageType string) error {
@@ -25,5 +25,5 @@ func checkDecodedStringIsImage(decodedImageType string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Fail to decode image, unknown type of source image: %s", decodedImageType)
+	return fmt.Errorf("fail to decode image, unknown type of source image: %s", decodedImageType)
 }

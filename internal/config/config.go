@@ -18,7 +18,7 @@ func GetConfigFromEnv() Config {
 	c := Config{}
 
 	err := env.Parse(&c)
-	helpers.FailOnError(err, "Fail get config from Env")
+	helpers.FailOnError(err, "fail get config from Env")
 
 	return c
 }

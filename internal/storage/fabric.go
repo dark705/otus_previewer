@@ -11,13 +11,13 @@ import (
 func Create(t, p string, l *logrus.Logger) Storage {
 	switch t {
 	case "inmemory":
-		l.Info("Use operative memory as cache storage")
+		l.Info("use operative memory as cache storage")
 		s := inmemory.New()
 		return &s
 	case "disk":
 		fallthrough
 	default:
-		l.Info(fmt.Sprintf("Use disk folder %s as cache storage", p))
+		l.Info(fmt.Sprintf("use disk folder %s as cache storage", p))
 		s := disk.New(p)
 		return &s
 	}

@@ -16,7 +16,7 @@ import (
 
 func main() {
 	conf := config.GetConfigFromEnv()
-	fmt.Printf("Current settings: %+v\n", conf)
+	fmt.Printf("current settings: %+v\n", conf)
 	log := logger.NewLogger(logger.Config{
 		Level: conf.LogLevel,
 	})
@@ -34,5 +34,5 @@ func main() {
 	osSignals := make(chan os.Signal, 1)
 	signal.Notify(osSignals, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Infof("Got signal from OS: %v. Exit...", <-osSignals)
+	log.Infof("got signal from OS: %v. Exit...", <-osSignals)
 }

@@ -39,7 +39,7 @@ func Resize(srcImageContent []byte, p ResizeConfig) ([]byte, error) {
 	case "fit":
 		destImage = imaging.Fit(srcImage, p.Width, p.Height, imaging.Lanczos)
 	default:
-		return nil, fmt.Errorf("Unknown action on image: %s", p.Action)
+		return nil, fmt.Errorf("unknown action on image: %s", p.Action)
 	}
 
 	//encode
@@ -52,7 +52,7 @@ func Resize(srcImageContent []byte, p ResizeConfig) ([]byte, error) {
 	case "gif":
 		err = imaging.Encode(&buf, destImage, imaging.GIF)
 	default:
-		err = fmt.Errorf("Fail encode image, type: %s", ds)
+		err = fmt.Errorf("fail encode image, type: %s", ds)
 	}
 	if err != nil {
 		return nil, err

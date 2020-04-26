@@ -26,7 +26,7 @@ func ReadImageAsByte(r io.Reader, limit int) ([]byte, error) {
 			return nil, err
 		}
 		if offset+read > limit {
-			return nil, fmt.Errorf("Requested image is bigger limit: %d", limit)
+			return nil, fmt.Errorf("requested image is bigger limit: %d", limit)
 		}
 		//check content is real image
 		if offset == 0 {

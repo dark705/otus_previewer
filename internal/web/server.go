@@ -40,23 +40,23 @@ func NewServer(conf Config, log *logrus.Logger, imageDispatcher *dispatcher.Imag
 
 func (s *Server) RunServer() {
 	go func() {
-		s.l.Infoln("Start HTTP server:", s.c.HTTPListen)
+		s.l.Infoln("start HTTP server:", s.c.HTTPListen)
 		err := s.ws.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
-			helpers.FailOnError(err, "Fail start HTTP Server")
+			helpers.FailOnError(err, "fail start HTTP Server")
 		}
 	}()
 }
 
 func (s *Server) Shutdown() {
-	s.l.Infoln("Shutdown HTTP server... ")
+	s.l.Infoln("shutdown HTTP server... ")
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*10)
 	err := s.ws.Shutdown(ctx)
 	if err != nil {
-		s.l.Errorln("Fail Shutdown HTTP server")
+		s.l.Errorln("fail Shutdown HTTP server")
 		return
 	}
-	s.l.Infoln("Success Shutdown HTTP server")
+	s.l.Infoln("success Shutdown HTTP server")
 }
 
 func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int, mu sync.Mutex) http.HandlerFunc {
@@ -64,7 +64,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		w.Header().Set("Server", "Previewer")
 
 		//Check and parse request params
-		l.Infoln(fmt.Sprintf("Income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
+		l.Infoln(fmt.Sprintf("income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
 		p, err := ParseURL(r.URL)
 		if err != nil {
 			l.Warnln(err)
@@ -74,12 +74,12 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 
 		//Generate uniq id for request, witch will be used for save image
 		uniqID := GenUniqIDForURL(r.URL)
-		l.Infoln(fmt.Sprintf("Generate uniq reqId: %s for Url: %s", uniqID, r.URL.Path))
+		l.Infoln(fmt.Sprintf("generate uniq reqId: %s for Url: %s", uniqID, r.URL.Path))
 
 		//Image found in cache
 		mu.Lock()
 		if imDis.Exist(uniqID) {
-			l.Infoln(fmt.Sprintf("Image for uniqID: %s, found in cache", uniqID))
+			l.Infoln(fmt.Sprintf("image for uniqID: %s, found in cache", uniqID))
 			resp, err := imDis.Get(uniqID)
 			mu.Unlock()
 			if err != nil {
@@ -96,7 +96,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		mu.Unlock()
 
 		//Image not fount in cache, need download
-		l.Infoln(fmt.Sprintf("Image for uniq reqId: %s, not found in cache, need to dowload", uniqID))
+		l.Infoln(fmt.Sprintf("image for uniq reqId: %s, not found in cache, need to dowload", uniqID))
 		//first try https
 		resp, err := makeRequest("https://", p.RequestURL, r.Header, nil)
 		if err != nil {
@@ -116,7 +116,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 			if err != nil {
 				l.Errorln(err)
 			}
-			l.Warnln(fmt.Sprintf("Remote server for url: %s return status: %d ", p.RequestURL, resp.StatusCode))
+			l.Warnln(fmt.Sprintf("remote server for url: %s return status: %d ", p.RequestURL, resp.StatusCode))
 			for h, v := range resp.Header {
 				w.Header().Set(h, v[0])
 			}
@@ -138,7 +138,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		}
 
 		//Downloaded image as byte, make convert
-		l.Infoln(fmt.Sprintf("Success download image for uniq reqId: %s,", uniqID))
+		l.Infoln(fmt.Sprintf("success download image for uniq reqId: %s,", uniqID))
 		convertedImage, err := image.Resize(im, image.ResizeConfig{
 			Action: p.Service,
 			Width:  p.Width,

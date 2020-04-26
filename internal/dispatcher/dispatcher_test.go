@@ -21,22 +21,22 @@ func TestAddGetSame(t *testing.T) {
 
 	err := imgDispatcher.Add(uniqID, image)
 	if err != nil {
-		t.Error("Fail on add image", err)
+		t.Error("fail on add image", err)
 	}
 
 	if !imgDispatcher.Exist(uniqID) {
 		if err != nil {
-			t.Error("Fail, added image do not exist")
+			t.Error("fail, added image do not exist")
 		}
 	}
 
 	imageGet, err := imgDispatcher.Get(uniqID)
 	if err != nil {
-		t.Error("Fail on get image", err)
+		t.Error("fail on get image", err)
 	}
 
 	if !bytes.Equal(imageGet, image) {
-		t.Error("Source and Get image not same")
+		t.Error("source and Get image not same")
 	}
 }
 
@@ -50,12 +50,12 @@ func TestTotalImagesSize(t *testing.T) {
 	for i := 0; i < countImages; i++ {
 		err := imageDispatcher.Add(genUniqID(), image)
 		if err != nil {
-			t.Error("Fail on add image", err)
+			t.Error("fail on add image", err)
 		}
 	}
 
 	if imageDispatcher.TotalImagesSize() != countImages*len(image) {
-		t.Error("Incorrect total images size")
+		t.Error("incorrect total images size")
 	}
 }
 
@@ -69,12 +69,12 @@ func TestTotalImagesSizeNotBiggerThenLimit(t *testing.T) {
 	for i := 0; i < countImages; i++ {
 		err := imageDispatcher.Add(genUniqID(), image)
 		if err != nil {
-			t.Error("Fail on add image", err)
+			t.Error("fail on add image", err)
 		}
 	}
 
 	if imageDispatcher.TotalImagesSize() > countImages*len(image) {
-		t.Error(fmt.Sprintf("Incorrect total images size, limit: %d, TotalImagesSize: %d",
+		t.Error(fmt.Sprintf("incorrect total images size, limit: %d, TotalImagesSize: %d",
 			cacheSizeLimit, imageDispatcher.TotalImagesSize()))
 	}
 }
@@ -110,7 +110,7 @@ func TestLeastRecentUsed(t *testing.T) {
 	_ = imageDispatcher.Add(uniqID4, image)
 
 	if imageDispatcher.Exist(uniqID3) {
-		t.Error("Image 3 exists but should not")
+		t.Error("image 3 exists but should not")
 	}
 
 	//add image5, it must replace image2
@@ -118,14 +118,14 @@ func TestLeastRecentUsed(t *testing.T) {
 	_ = imageDispatcher.Add(uniqID5, image)
 
 	if imageDispatcher.Exist(uniqID2) {
-		t.Error("Image 2 exists but should not")
+		t.Error("image 2 exists but should not")
 	}
 
 	//now 3 in storage images: 5,4,1
 	if !imageDispatcher.Exist(uniqID5) ||
 		!imageDispatcher.Exist(uniqID4) ||
 		!imageDispatcher.Exist(uniqID1) {
-		t.Error("Expected images not exist")
+		t.Error("expected images not exist")
 	}
 }
 

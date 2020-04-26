@@ -51,10 +51,10 @@ func (imDis *ImageDispatcher) Exist(id string) bool {
 func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
 	_, exist := imDis.imageState[id]
 	if !exist {
-		return nil, fmt.Errorf("Fail on update lastUse on get, image with id: %s not exist", id)
+		return nil, fmt.Errorf("fail on update lastUse on get, image with id: %s not exist", id)
 	}
 	imDis.imageState[id] = imageInfo{size: imDis.imageState[id].size, lastUse: time.Now()}
-	imDis.logger.Debugln(fmt.Sprintf("Image with id: %s updated, last use time: %s", id, time.Now()))
+	imDis.logger.Debugln(fmt.Sprintf("image with id: %s updated, last use time: %s", id, time.Now()))
 	return imDis.storage.Get(id)
 }
 
@@ -64,7 +64,7 @@ func (imDis *ImageDispatcher) Add(id string, image []byte) error {
 		return imDis.addAvailable(id, image)
 	}
 	//storage is full, need to clean,
-	imDis.logger.Debugln(fmt.Sprintf("Storage is full, totalImagesSize: %d, make clean", imDis.TotalImagesSize()))
+	imDis.logger.Debugln(fmt.Sprintf("storage is full, totalImagesSize: %d, make clean", imDis.TotalImagesSize()))
 	err := imDis.cleanOldUseImagesOn(len(image))
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (imDis *ImageDispatcher) addAvailable(id string, image []byte) error {
 	}
 	imDis.totalImagesSize += len(image)
 	imDis.imageState[id] = imageInfo{size: len(image), lastUse: time.Now()}
-	imDis.logger.Debugln(fmt.Sprintf("Storage not full, add image with id: %s, size: %d, now total images size: %d", id, len(image), imDis.TotalImagesSize()))
+	imDis.logger.Debugln(fmt.Sprintf("storage not full, add image with id: %s, size: %d, now total images size: %d", id, len(image), imDis.TotalImagesSize()))
 	return nil
 }
 
@@ -111,7 +111,7 @@ func (imDis *ImageDispatcher) cleanOldUseImagesOn(needCleanBytes int) error {
 		usedSize := imDis.imageState[val.i].size
 		imDis.totalImagesSize -= usedSize
 		delete(imDis.imageState, val.i)
-		imDis.logger.Debugln(fmt.Sprintf("Deleted image with id: %s, used size: %d", val.i, usedSize))
+		imDis.logger.Debugln(fmt.Sprintf("deleted image with id: %s, used size: %d", val.i, usedSize))
 		if imDis.totalImagesSize+needCleanBytes <= imDis.maxLimit {
 			break
 		}
