@@ -20,13 +20,13 @@ func main() {
 	log := logger.NewLogger(logger.Config{
 		Level: conf.LogLevel,
 	})
-	st := storage.Create(conf.CacheType, conf.CachePath, &log)
-	imageDispatcher := dispatcher.New(st, conf.CacheSize, &log)
+	st := storage.Create(conf.CacheType, conf.CachePath, log)
+	imageDispatcher := dispatcher.New(st, conf.CacheSize, log)
 
 	server := web.NewServer(web.Config{
 		HTTPListen:       conf.HTTPListen,
 		ImageMaxFileSize: conf.ImageMaxFileSize,
-	}, &log, &imageDispatcher)
+	}, log, &imageDispatcher)
 
 	server.RunServer()
 	defer server.Shutdown()

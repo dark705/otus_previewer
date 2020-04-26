@@ -10,7 +10,7 @@ type Config struct {
 	Level string
 }
 
-func NewLogger(c Config) logrus.Logger {
+func NewLogger(c Config) *logrus.Logger {
 	logger := logrus.Logger{}
 
 	switch c.Level {
@@ -30,5 +30,5 @@ func NewLogger(c Config) logrus.Logger {
 	logger.SetFormatter(&formatter)
 	logger.SetOutput(os.Stdout)
 
-	return logger
+	return &logger
 }
