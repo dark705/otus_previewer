@@ -107,8 +107,8 @@ func TestLeastRecentUsed(t *testing.T) {
 	uniqID4 := genUniqID()
 	_ = imageDispatcher.Add(uniqID4, image)
 
-	img3, _ := imageDispatcher.Get(uniqID3)
-	if img3 != nil {
+	image3, _ := imageDispatcher.Get(uniqID3)
+	if image3 != nil {
 		t.Error("image 3 exists but should not")
 	}
 
@@ -116,23 +116,23 @@ func TestLeastRecentUsed(t *testing.T) {
 	uniqID5 := genUniqID()
 	_ = imageDispatcher.Add(uniqID5, image)
 
-	img2, _ := imageDispatcher.Get(uniqID2)
-	if img2 != nil {
+	image2, _ := imageDispatcher.Get(uniqID2)
+	if image2 != nil {
 		t.Error("image 2 exists but should not")
 	}
 
-	img5, _ := imageDispatcher.Get(uniqID5)
-	img4, _ := imageDispatcher.Get(uniqID4)
-	img1, _ := imageDispatcher.Get(uniqID1)
+	image5, _ := imageDispatcher.Get(uniqID5)
+	image4, _ := imageDispatcher.Get(uniqID4)
+	image1, _ := imageDispatcher.Get(uniqID1)
 
 	//now 3 in storage images: 5,4,1
-	if img5 == nil || img4 == nil || img1 == nil {
+	if image5 == nil || image4 == nil || image1 == nil {
 		t.Error("expected images not exist")
 	}
 }
 
 func genUniqID() string {
 	time.Sleep(time.Nanosecond) //windows fix
-	b := sha256.Sum256([]byte(time.Now().String()))
-	return hex.EncodeToString(b[:])
+	uniqBytes := sha256.Sum256([]byte(time.Now().String()))
+	return hex.EncodeToString(uniqBytes[:])
 }

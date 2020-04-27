@@ -10,8 +10,8 @@ var allowTypes = []string{"image/jpeg", "image/png", "image/gif"}
 
 func checkBytesIsImage(b []byte) error {
 	imageType := http.DetectContentType(b)
-	for _, t := range allowTypes {
-		if t == imageType {
+	for _, allowType := range allowTypes {
+		if allowType == imageType {
 			return nil
 		}
 	}
@@ -19,9 +19,9 @@ func checkBytesIsImage(b []byte) error {
 }
 
 func checkDecodedStringIsImage(decodedImageType string) error {
-	for _, t := range allowTypes {
-		t = strings.ReplaceAll(t, "image/", "")
-		if t == decodedImageType {
+	for _, allowType := range allowTypes {
+		allowType = strings.ReplaceAll(allowType, "image/", "")
+		if allowType == decodedImageType {
 			return nil
 		}
 	}

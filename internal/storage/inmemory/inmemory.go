@@ -12,35 +12,35 @@ func New() InMemory {
 	return InMemory{storage: map[string][]byte{}}
 }
 
-func (s *InMemory) Add(id string, content []byte) error {
-	_, exist := s.storage[id]
+func (storage *InMemory) Add(id string, content []byte) error {
+	_, exist := storage.storage[id]
 	if exist {
-		return fmt.Errorf("fail on Add, content with id: %s already exist", id)
+		return fmt.Errorf("fail on Add, content with id: %storage already exist", id)
 	}
-	s.storage[id] = content
+	storage.storage[id] = content
 	return nil
 }
 
-func (s *InMemory) Del(id string) error {
-	_, exist := s.storage[id]
+func (storage *InMemory) Del(id string) error {
+	_, exist := storage.storage[id]
 	if !exist {
-		return fmt.Errorf("fail on Del, content with id: %s not exist", id)
+		return fmt.Errorf("fail on Del, content with id: %storage not exist", id)
 	}
-	delete(s.storage, id)
+	delete(storage.storage, id)
 	return nil
 }
 
-func (s *InMemory) Get(id string) ([]byte, error) {
-	_, exist := s.storage[id]
+func (storage *InMemory) Get(id string) ([]byte, error) {
+	_, exist := storage.storage[id]
 	if !exist {
-		return nil, fmt.Errorf("fail on Get, content with id: %s not exist", id)
+		return nil, fmt.Errorf("fail on Get, content with id: %storage not exist", id)
 	}
-	return s.storage[id], nil
+	return storage.storage[id], nil
 }
 
-func (s *InMemory) GetListSize() map[string]int {
-	usage := make(map[string]int, len(s.storage))
-	for id, c := range s.storage {
+func (storage *InMemory) GetListSize() map[string]int {
+	usage := make(map[string]int, len(storage.storage))
+	for id, c := range storage.storage {
 		usage[id] = len(c)
 	}
 	return usage

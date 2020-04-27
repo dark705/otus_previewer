@@ -7,7 +7,6 @@ import (
 )
 
 func GenUniqIDForURL(url *url.URL) string {
-	b := sha256.Sum256([]byte(url.Path))
-	s := hex.EncodeToString(b[:])
-	return s
+	uniqBytes := sha256.Sum256([]byte(url.Path))
+	return hex.EncodeToString(uniqBytes[:])
 }

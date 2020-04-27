@@ -14,7 +14,7 @@ type URLParams struct {
 	RequestURL string
 }
 
-func ParseURL(url *url.URL) (p URLParams, err error) {
+func ParseURL(url *url.URL) (params URLParams, err error) {
 	const (
 		serviceIndex  = 1
 		widthIndex    = 2
@@ -24,44 +24,44 @@ func ParseURL(url *url.URL) (p URLParams, err error) {
 	var allowServices = []string{"fill", "resize", "fit"}
 
 	path := url.Path
-	p = URLParams{}
-	ps := strings.Split(path, "/")
+	params = URLParams{}
+	slicedParams := strings.Split(path, "/")
 
-	if len(ps) <= 5 {
-		return p, fmt.Errorf("not enough params in path: %s", path)
+	if len(slicedParams) <= 5 {
+		return params, fmt.Errorf("not enough params in path: %s", path)
 	}
 
 	//check and parse for allow services
-	ps[serviceIndex] = strings.ToLower(ps[serviceIndex])
-	err = fmt.Errorf("invalid service type: %s. Allow types: %s", ps[serviceIndex], strings.Join(allowServices, ", "))
+	slicedParams[serviceIndex] = strings.ToLower(slicedParams[serviceIndex])
+	err = fmt.Errorf("invalid service type: %s. Allow types: %s", slicedParams[serviceIndex], strings.Join(allowServices, ", "))
 	for _, t := range allowServices {
-		if t == ps[1] {
-			p.Service = ps[serviceIndex]
+		if t == slicedParams[1] {
+			params.Service = slicedParams[serviceIndex]
 			err = nil
 			break
 		}
 	}
 	if err != nil {
-		return p, err
+		return params, err
 	}
 
 	//check and parse width
-	p.Width, err = strconv.Atoi(ps[widthIndex])
-	if err != nil || p.Width <= 0 {
-		return p, fmt.Errorf("invalid Width: %s", ps[widthIndex])
+	params.Width, err = strconv.Atoi(slicedParams[widthIndex])
+	if err != nil || params.Width <= 0 {
+		return params, fmt.Errorf("invalid Width: %s", slicedParams[widthIndex])
 	}
 
 	//check and parse height
-	p.Height, err = strconv.Atoi(ps[heightIndex])
-	if err != nil || p.Height <= 0 {
-		return p, fmt.Errorf("invalid Height: %s", ps[heightIndex])
+	params.Height, err = strconv.Atoi(slicedParams[heightIndex])
+	if err != nil || params.Height <= 0 {
+		return params, fmt.Errorf("invalid Height: %s", slicedParams[heightIndex])
 	}
 
 	//check and parse required remote url
-	p.RequestURL = strings.Join(ps[urlStartIndex:], "/")
-	if ps[urlStartIndex] == "" || ps[urlStartIndex+1] == "" {
-		return p, fmt.Errorf("invalid requst Url: %s", p.RequestURL)
+	params.RequestURL = strings.Join(slicedParams[urlStartIndex:], "/")
+	if slicedParams[urlStartIndex] == "" || slicedParams[urlStartIndex+1] == "" {
+		return params, fmt.Errorf("invalid requst Url: %s", params.RequestURL)
 	}
 
-	return p, nil
+	return params, nil
 }

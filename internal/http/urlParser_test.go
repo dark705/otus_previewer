@@ -25,32 +25,32 @@ func TestServiceType(t *testing.T) {
 		t.Error("no error on wrong url service")
 	}
 
-	p, err := http.ParseURL(&url.URL{Path: "/fill/300/200/some_site.com/image.jpeg"})
-	if err != nil || p.Service != "fill" {
+	urlParams, err := http.ParseURL(&url.URL{Path: "/fill/300/200/some_site.com/image.jpeg"})
+	if err != nil || urlParams.Service != "fill" {
 		t.Error("error on correct url service fill ")
 	}
 
-	p, err = http.ParseURL(&url.URL{Path: "/resize/300/200/some_site.com/image.jpeg"})
-	if err != nil || p.Service != "resize" {
+	urlParams, err = http.ParseURL(&url.URL{Path: "/resize/300/200/some_site.com/image.jpeg"})
+	if err != nil || urlParams.Service != "resize" {
 		t.Error("error on correct url service resize")
 	}
 
-	p, err = http.ParseURL(&url.URL{Path: "/fit/300/200/some_site.com/image.jpeg"})
-	if err != nil || p.Service != "fit" {
+	urlParams, err = http.ParseURL(&url.URL{Path: "/fit/300/200/some_site.com/image.jpeg"})
+	if err != nil || urlParams.Service != "fit" {
 		t.Error("error on correct url service fit")
 	}
 }
 
 func TestWidthHeight(t *testing.T) {
-	p, err := http.ParseURL(&url.URL{Path: "/fill/300/200/some_site.com/image.jpeg"})
-	if err != nil || p.Width != 300 || p.Height != 200 {
+	urlParams, err := http.ParseURL(&url.URL{Path: "/fill/300/200/some_site.com/image.jpeg"})
+	if err != nil || urlParams.Width != 300 || urlParams.Height != 200 {
 		t.Error("incorrect parse Width or Height")
 	}
 }
 
 func TestRequestedUrl(t *testing.T) {
-	p, err := http.ParseURL(&url.URL{Path: "/fill/300/200/some_site.com/image.jpeg"})
-	if err != nil || p.RequestURL != "some_site.com/image.jpeg" {
+	urlParams, err := http.ParseURL(&url.URL{Path: "/fill/300/200/some_site.com/image.jpeg"})
+	if err != nil || urlParams.RequestURL != "some_site.com/image.jpeg" {
 		t.Error("incorrect parse remote requested url")
 	}
 }

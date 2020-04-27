@@ -20,14 +20,14 @@ func TestStressAndRace(t *testing.T) {
 
 	for i := 0; i < count; i++ {
 		go func(clientId int) {
-			resp, err := http.Get("http://previewer:8013/resize/300/200/nginx/test_image.jpg")
+			response, err := http.Get("http://previewer:8013/resize/300/200/nginx/test_image.jpg")
 			if err != nil {
 				t.Error(fmt.Sprintf("fail on client: %d get remote image, err: %s", clientId, err))
 			}
-			defer resp.Body.Close()
-			if resp.StatusCode != http.StatusOK {
+			defer response.Body.Close()
+			if response.StatusCode != http.StatusOK {
 				t.Error(fmt.Sprintf("on resize existing image, Service return status code: %d, but expected code: %d",
-					resp.StatusCode, http.StatusOK))
+					response.StatusCode, http.StatusOK))
 			}
 			wg.Done()
 		}(i)

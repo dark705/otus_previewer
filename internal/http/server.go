@@ -11,10 +11,10 @@ import (
 )
 
 type Server struct {
-	config           Config
-	logger           *logrus.Logger
-	httpServer       *http.Server
-	imgageDispatcher *dispatcher.ImageDispatcher
+	config          Config
+	logger          *logrus.Logger
+	httpServer      *http.Server
+	imageDispatcher *dispatcher.ImageDispatcher
 }
 
 type Config struct {
@@ -24,10 +24,10 @@ type Config struct {
 
 func NewServer(config Config, logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher) Server {
 	return Server{
-		config:           config,
-		logger:           logger,
-		httpServer:       &http.Server{Addr: config.HTTPListen, Handler: handlerRequest(logger, imageDispatcher, config.ImageMaxFileSize)},
-		imgageDispatcher: imageDispatcher,
+		config:          config,
+		logger:          logger,
+		httpServer:      &http.Server{Addr: config.HTTPListen, Handler: handlerRequest(logger, imageDispatcher, config.ImageMaxFileSize)},
+		imageDispatcher: imageDispatcher,
 	}
 }
 

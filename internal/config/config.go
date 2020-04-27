@@ -11,7 +11,7 @@ type Config struct {
 	ImageMaxFileSize int    `env:"IMAGE_MAX_FILE_SIZE" envDefault:"1000000"`
 	CacheSize        int    `env:"CACHE_SIZE" envDefault:"100000000"`
 	CacheType        string `env:"CACHE_TYPE" envDefault:"disk"`
-	CachePath        string `env:"CACHE_TYPE" envDefault:"./cache"`
+	CachePath        string `env:"CACHE_PATH" envDefault:"./cache"`
 }
 
 func GetConfigFromEnv() Config {

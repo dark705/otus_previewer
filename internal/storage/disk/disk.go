@@ -24,32 +24,32 @@ func New(path string) Disk {
 	return Disk{path: path + "/"}
 }
 
-func (s *Disk) Add(id string, content []byte) error {
-	err := ioutil.WriteFile(s.path+id, content, 0664)
+func (storage *Disk) Add(id string, content []byte) error {
+	err := ioutil.WriteFile(storage.path+id, content, 0664)
 	if err != nil {
-		return errorsPack.Wrap(err, fmt.Sprintf("fail on Add, content with id: %s already exist", id))
+		return errorsPack.Wrap(err, fmt.Sprintf("fail on Add, content with id: %storage already exist", id))
 	}
 	return nil
 }
 
-func (s *Disk) Del(id string) error {
-	err := os.Remove(s.path + id)
+func (storage *Disk) Del(id string) error {
+	err := os.Remove(storage.path + id)
 	if err != nil {
-		return errorsPack.Wrap(err, fmt.Sprintf("fail on Del, content with id: %s not exist", id))
+		return errorsPack.Wrap(err, fmt.Sprintf("fail on Del, content with id: %storage not exist", id))
 	}
 	return nil
 }
 
-func (s *Disk) Get(id string) ([]byte, error) {
-	content, err := ioutil.ReadFile(s.path + id)
+func (storage *Disk) Get(id string) ([]byte, error) {
+	content, err := ioutil.ReadFile(storage.path + id)
 	if err != nil {
-		return nil, errorsPack.Wrap(err, fmt.Sprintf("fail on Get, content with id: %s", id))
+		return nil, errorsPack.Wrap(err, fmt.Sprintf("fail on Get, content with id: %storage", id))
 	}
 	return content, nil
 }
 
-func (s *Disk) GetListSize() map[string]int {
-	files, err := ioutil.ReadDir(s.path)
+func (storage *Disk) GetListSize() map[string]int {
+	files, err := ioutil.ReadDir(storage.path)
 	helpers.FailOnError(err, "cant read cache dir")
 	usage := make(map[string]int)
 

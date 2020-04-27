@@ -8,8 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func Create(t, p string, l *logrus.Logger) Storage {
-	switch t {
+func Create(storageType, storagePath string, l *logrus.Logger) Storage {
+	switch storageType {
 	case "inmemory":
 		l.Info("use operative memory as cache storage")
 		s := inmemory.New()
@@ -17,8 +17,8 @@ func Create(t, p string, l *logrus.Logger) Storage {
 	case "disk":
 		fallthrough
 	default:
-		l.Info(fmt.Sprintf("use disk folder %s as cache storage", p))
-		s := disk.New(p)
+		l.Info(fmt.Sprintf("use disk folder %s as cache storage", storagePath))
+		s := disk.New(storagePath)
 		return &s
 	}
 }
