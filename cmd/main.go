@@ -7,11 +7,11 @@ import (
 	"syscall"
 
 	"github.com/dark705/otus_previewer/internal/dispatcher"
+	"github.com/dark705/otus_previewer/internal/http"
 	"github.com/dark705/otus_previewer/internal/storage"
 
 	"github.com/dark705/otus_previewer/internal/config"
 	"github.com/dark705/otus_previewer/internal/logger"
-	"github.com/dark705/otus_previewer/internal/web"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 	st := storage.Create(conf.CacheType, conf.CachePath, log)
 	imageDispatcher := dispatcher.New(st, conf.CacheSize, log)
 
-	server := web.NewServer(web.Config{
+	server := http.NewServer(http.Config{
 		HTTPListen:       conf.HTTPListen,
 		ImageMaxFileSize: conf.ImageMaxFileSize,
 	}, log, &imageDispatcher)

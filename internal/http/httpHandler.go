@@ -1,62 +1,14 @@
-package web
+package http
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/dark705/otus_previewer/internal/dispatcher"
 	"github.com/dark705/otus_previewer/internal/image"
-
-	"github.com/dark705/otus_previewer/internal/helpers"
 	"github.com/sirupsen/logrus"
 )
-
-type Server struct {
-	config           Config
-	logger           *logrus.Logger
-	httpServer       *http.Server
-	imgageDispatcher *dispatcher.ImageDispatcher
-}
-
-type Config struct {
-	HTTPListen       string
-	ImageMaxFileSize int
-}
-
-func NewServer(config Config, logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher) Server {
-	return Server{
-		config:           config,
-		logger:           logger,
-		httpServer:       &http.Server{Addr: config.HTTPListen, Handler: handlerRequest(logger, imageDispatcher, config.ImageMaxFileSize)},
-		imgageDispatcher: imageDispatcher,
-	}
-}
-
-func (s *Server) RunServer() {
-	go func() {
-		s.logger.Infoln("start HTTP server:", s.config.HTTPListen)
-		err := s.httpServer.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			helpers.FailOnError(err, "fail start HTTP Server")
-		}
-	}()
-}
-
-func (s *Server) Shutdown() {
-	s.logger.Infoln("shutdown HTTP server... ")
-	ctx, chancel := context.WithTimeout(context.Background(), time.Second*10)
-	err := s.httpServer.Shutdown(ctx)
-	if err != nil {
-		s.logger.Errorln("fail Shutdown HTTP server")
-		chancel()
-		return
-	}
-	s.logger.Infoln("success Shutdown HTTP server")
-	chancel()
-}
 
 func handlerRequest(logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher, imageLimit int) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
@@ -111,30 +63,23 @@ func handleNoCached(logger *logrus.Logger,
 	responseWriter http.ResponseWriter,
 	request *http.Request) {
 	logger.Infoln(fmt.Sprintf("image for uniq reqId: %s, not found in cache, need to dowload", uniqID))
-	//first try https
-	resp, err := makeRequest("https://", parsedURL.RequestURL, request.Header, nil)
+	response, err := makeRequest(parsedURL.RequestURL, request.Header, nil)
 	if err != nil {
-		logger.Warnln(err)
-		//if some error, try http
-		resp, err = makeRequest("http://", parsedURL.RequestURL, request.Header, nil)
-		if err != nil {
-			logger.Warnln(err)
-			http.Error(responseWriter, err.Error(), http.StatusBadGateway)
-			return
-		}
+		http.Error(responseWriter, err.Error(), http.StatusBadGateway)
+		return
 	}
 	//If remote server response not StatusOk, proxy response to client with status, headers and body
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, err := ioutil.ReadAll(resp.Body)
-		_ = resp.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		bodyBytes, err := ioutil.ReadAll(response.Body)
+		_ = response.Body.Close()
 		if err != nil {
 			logger.Errorln(err)
 		}
-		logger.Warnln(fmt.Sprintf("remote server for url: %s return status: %d ", parsedURL.RequestURL, resp.StatusCode))
-		for h, v := range resp.Header {
+		logger.Warnln(fmt.Sprintf("remote server for url: %s return status: %d ", parsedURL.RequestURL, response.StatusCode))
+		for h, v := range response.Header {
 			responseWriter.Header().Set(h, v[0])
 		}
-		responseWriter.WriteHeader(resp.StatusCode)
+		responseWriter.WriteHeader(response.StatusCode)
 		_, err = responseWriter.Write(bodyBytes)
 		if err != nil {
 			logger.Errorln(err)
@@ -143,8 +88,8 @@ func handleNoCached(logger *logrus.Logger,
 	}
 
 	//Status Ok, read response as image
-	im, err := image.ReadImageAsByte(resp.Body, imageLimit)
-	_ = resp.Body.Close()
+	im, err := image.ReadImageAsByte(response.Body, imageLimit)
+	_ = response.Body.Close()
 	if err != nil {
 		logger.Warnln(err)
 		http.Error(responseWriter, err.Error(), http.StatusBadGateway)
