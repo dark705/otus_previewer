@@ -43,15 +43,10 @@ func (imDis *ImageDispatcher) TotalImagesSize() int {
 	return imDis.totalImagesSize
 }
 
-func (imDis *ImageDispatcher) Exist(id string) bool {
-	_, exist := imDis.imageState[id]
-	return exist
-}
-
 func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
 	_, exist := imDis.imageState[id]
 	if !exist {
-		return nil, fmt.Errorf("fail on update lastUse on get, image with id: %s not exist", id)
+		return nil, nil
 	}
 	imDis.imageState[id] = imageInfo{size: imDis.imageState[id].size, lastUse: time.Now()}
 	imDis.logger.Debugln(fmt.Sprintf("image with id: %s updated, last use time: %s", id, time.Now()))

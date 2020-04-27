@@ -24,15 +24,13 @@ func TestAddGetSame(t *testing.T) {
 		t.Error("fail on add image", err)
 	}
 
-	if !imgDispatcher.Exist(uniqID) {
-		if err != nil {
-			t.Error("fail, added image do not exist")
-		}
-	}
-
 	imageGet, err := imgDispatcher.Get(uniqID)
 	if err != nil {
 		t.Error("fail on get image", err)
+	}
+
+	if imageGet == nil {
+		t.Error("fail, added image do not exist")
 	}
 
 	if !bytes.Equal(imageGet, image) {
@@ -109,7 +107,8 @@ func TestLeastRecentUsed(t *testing.T) {
 	uniqID4 := genUniqID()
 	_ = imageDispatcher.Add(uniqID4, image)
 
-	if imageDispatcher.Exist(uniqID3) {
+	img3, _ := imageDispatcher.Get(uniqID3)
+	if img3 != nil {
 		t.Error("image 3 exists but should not")
 	}
 
@@ -117,14 +116,17 @@ func TestLeastRecentUsed(t *testing.T) {
 	uniqID5 := genUniqID()
 	_ = imageDispatcher.Add(uniqID5, image)
 
-	if imageDispatcher.Exist(uniqID2) {
+	img2, _ := imageDispatcher.Get(uniqID2)
+	if img2 != nil {
 		t.Error("image 2 exists but should not")
 	}
 
+	img5, _ := imageDispatcher.Get(uniqID5)
+	img4, _ := imageDispatcher.Get(uniqID4)
+	img1, _ := imageDispatcher.Get(uniqID1)
+
 	//now 3 in storage images: 5,4,1
-	if !imageDispatcher.Exist(uniqID5) ||
-		!imageDispatcher.Exist(uniqID4) ||
-		!imageDispatcher.Exist(uniqID1) {
+	if img5 == nil || img4 == nil || img1 == nil {
 		t.Error("expected images not exist")
 	}
 }

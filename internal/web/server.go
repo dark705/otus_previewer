@@ -82,22 +82,21 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 
 		//Image found in cache
 		mu.Lock()
-		if imDis.Exist(uniqID) {
+		cachedImage, err := imDis.Get(uniqID)
+		mu.Unlock()
+		if err != nil {
+			l.Errorln(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if cachedImage != nil {
 			l.Infoln(fmt.Sprintf("image for uniqID: %s, found in cache", uniqID))
-			resp, err := imDis.Get(uniqID)
-			mu.Unlock()
-			if err != nil {
-				l.Errorln(err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			_, err = w.Write(resp)
+			_, err = w.Write(cachedImage)
 			if err != nil {
 				l.Errorln(err)
 			}
 			return
 		}
-		mu.Unlock()
 
 		//Image not fount in cache, need download
 		l.Infoln(fmt.Sprintf("image for uniq reqId: %s, not found in cache, need to dowload", uniqID))
