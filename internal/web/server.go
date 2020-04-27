@@ -26,11 +26,11 @@ type Config struct {
 	ImageMaxFileSize int
 }
 
-func NewServer(conf Config, log *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher) Server {
+func NewServer(config Config, logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher) Server {
 	return Server{
-		config:           conf,
-		logger:           log,
-		httpServer:       &http.Server{Addr: conf.HTTPListen, Handler: handlerRequest(log, imageDispatcher, conf.ImageMaxFileSize)},
+		config:           config,
+		logger:           logger,
+		httpServer:       &http.Server{Addr: config.HTTPListen, Handler: handlerRequest(logger, imageDispatcher, config.ImageMaxFileSize)},
 		imgageDispatcher: imageDispatcher,
 	}
 }
@@ -58,104 +58,121 @@ func (s *Server) Shutdown() {
 	chancel()
 }
 
-func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Server", "Previewer")
+func handlerRequest(logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher, imageLimit int) http.HandlerFunc {
+	return func(responseWriter http.ResponseWriter, request *http.Request) {
+		responseWriter.Header().Set("Server", "Previewer")
 
 		//Check and parse request params
-		l.Infoln(fmt.Sprintf("income request: %s %s %s", r.RemoteAddr, r.Method, r.URL))
-		p, err := ParseURL(r.URL)
+		logger.Infoln(fmt.Sprintf("income request: %s %s %s", request.RemoteAddr, request.Method, request.URL))
+		parsedURL, err := ParseURL(request.URL)
 		if err != nil {
-			l.Warnln(err)
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			logger.Warnln(err)
+			http.Error(responseWriter, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		//Generate uniq id for request, witch will be used for save image
-		uniqID := GenUniqIDForURL(r.URL)
-		l.Infoln(fmt.Sprintf("generate uniq reqId: %s for Url: %s", uniqID, r.URL.Path))
+		uniqID := GenUniqIDForURL(request.URL)
+		logger.Infoln(fmt.Sprintf("generate uniq reqId: %s for Url: %s", uniqID, request.URL.Path))
 
-		//Image found in cache
-		cachedImage, err := imDis.Get(uniqID)
+		if handleCached(logger, imageDispatcher, responseWriter, uniqID) {
+			return
+		}
+		handleNoCached(logger, imageDispatcher, imageLimit, parsedURL, uniqID, responseWriter, request)
+	}
+}
+
+func handleCached(logger *logrus.Logger,
+	imageDispatcher *dispatcher.ImageDispatcher,
+	responseWriter http.ResponseWriter,
+	uniqID string) bool {
+	cachedImage, err := imageDispatcher.Get(uniqID)
+	if err != nil {
+		logger.Errorln(err)
+		http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+		return true
+	}
+	if cachedImage != nil {
+		logger.Infoln(fmt.Sprintf("image for uniqID: %s, found in cache", uniqID))
+		_, err = responseWriter.Write(cachedImage)
 		if err != nil {
-			l.Errorln(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			logger.Errorln(err)
 		}
-		if cachedImage != nil {
-			l.Infoln(fmt.Sprintf("image for uniqID: %s, found in cache", uniqID))
-			_, err = w.Write(cachedImage)
-			if err != nil {
-				l.Errorln(err)
-			}
-			return
-		}
+		return true
+	}
+	return false
+}
 
-		//Image not fount in cache, need download
-		l.Infoln(fmt.Sprintf("image for uniq reqId: %s, not found in cache, need to dowload", uniqID))
-		//first try https
-		resp, err := makeRequest("https://", p.RequestURL, r.Header, nil)
+func handleNoCached(logger *logrus.Logger,
+	imageDispatcher *dispatcher.ImageDispatcher,
+	imageLimit int,
+	parsedURL URLParams,
+	uniqID string,
+	responseWriter http.ResponseWriter,
+	request *http.Request) {
+	logger.Infoln(fmt.Sprintf("image for uniq reqId: %s, not found in cache, need to dowload", uniqID))
+	//first try https
+	resp, err := makeRequest("https://", parsedURL.RequestURL, request.Header, nil)
+	if err != nil {
+		logger.Warnln(err)
+		//if some error, try http
+		resp, err = makeRequest("http://", parsedURL.RequestURL, request.Header, nil)
 		if err != nil {
-			l.Warnln(err)
-			//if some error, try http
-			resp, err = makeRequest("http://", p.RequestURL, r.Header, nil)
-			if err != nil {
-				l.Warnln(err)
-				http.Error(w, err.Error(), http.StatusBadGateway)
-				return
-			}
-		}
-		//If remote server response not StatusOk, proxy response to client with status, headers and body
-		if resp.StatusCode != http.StatusOK {
-			bodyBytes, err := ioutil.ReadAll(resp.Body)
-			_ = resp.Body.Close()
-			if err != nil {
-				l.Errorln(err)
-			}
-			l.Warnln(fmt.Sprintf("remote server for url: %s return status: %d ", p.RequestURL, resp.StatusCode))
-			for h, v := range resp.Header {
-				w.Header().Set(h, v[0])
-			}
-			w.WriteHeader(resp.StatusCode)
-			_, err = w.Write(bodyBytes)
-			if err != nil {
-				l.Errorln(err)
-			}
+			logger.Warnln(err)
+			http.Error(responseWriter, err.Error(), http.StatusBadGateway)
 			return
 		}
-
-		//Status Ok, read response as image
-		im, err := image.ReadImageAsByte(resp.Body, imageLimit)
+	}
+	//If remote server response not StatusOk, proxy response to client with status, headers and body
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		_ = resp.Body.Close()
 		if err != nil {
-			l.Warnln(err)
-			http.Error(w, err.Error(), http.StatusBadGateway)
-			return
+			logger.Errorln(err)
 		}
-
-		//Downloaded image as byte, make convert
-		l.Infoln(fmt.Sprintf("success download image for uniq reqId: %s,", uniqID))
-		convertedImage, err := image.Resize(im, image.ResizeConfig{
-			Action: p.Service,
-			Width:  p.Width,
-			Height: p.Height,
-		})
+		logger.Warnln(fmt.Sprintf("remote server for url: %s return status: %d ", parsedURL.RequestURL, resp.StatusCode))
+		for h, v := range resp.Header {
+			responseWriter.Header().Set(h, v[0])
+		}
+		responseWriter.WriteHeader(resp.StatusCode)
+		_, err = responseWriter.Write(bodyBytes)
 		if err != nil {
-			l.Errorln(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			logger.Errorln(err)
 		}
+		return
+	}
 
-		//send to client
-		_, err = w.Write(convertedImage)
-		if err != nil {
-			l.Errorln(err)
-		}
+	//Status Ok, read response as image
+	im, err := image.ReadImageAsByte(resp.Body, imageLimit)
+	_ = resp.Body.Close()
+	if err != nil {
+		logger.Warnln(err)
+		http.Error(responseWriter, err.Error(), http.StatusBadGateway)
+		return
+	}
 
-		//save to cache
-		err = imDis.Add(uniqID, convertedImage)
-		if err != nil {
-			l.Errorln(err)
-		}
+	//Downloaded image as byte, make convert
+	logger.Infoln(fmt.Sprintf("success download image for uniq reqId: %s,", uniqID))
+	convertedImage, err := image.Resize(im, image.ResizeConfig{
+		Action: parsedURL.Service,
+		Width:  parsedURL.Width,
+		Height: parsedURL.Height,
+	})
+	if err != nil {
+		logger.Errorln(err)
+		http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	//send to client
+	_, err = responseWriter.Write(convertedImage)
+	if err != nil {
+		logger.Errorln(err)
+	}
+
+	//save to cache
+	err = imageDispatcher.Add(uniqID, convertedImage)
+	if err != nil {
+		logger.Errorln(err)
 	}
 }
