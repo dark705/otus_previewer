@@ -3,6 +3,7 @@ package dispatcher
 import (
 	"fmt"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/dark705/otus_previewer/internal/storage"
@@ -15,11 +16,12 @@ type imageInfo struct {
 }
 
 type ImageDispatcher struct {
+	logger          *logrus.Logger
+	mu              sync.Mutex
 	storage         storage.Storage
 	imageState      map[string]imageInfo
 	totalImagesSize int
 	maxLimit        int
-	logger          *logrus.Logger
 }
 
 func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatcher {
@@ -32,6 +34,7 @@ func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatc
 
 	return ImageDispatcher{
 		storage:         storage,
+		mu:              sync.Mutex{},
 		imageState:      state,
 		totalImagesSize: totalSize,
 		maxLimit:        limit,
@@ -40,10 +43,14 @@ func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatc
 }
 
 func (imDis *ImageDispatcher) TotalImagesSize() int {
+	imDis.mu.Lock()
+	defer imDis.mu.Unlock()
 	return imDis.totalImagesSize
 }
 
 func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
+	imDis.mu.Lock()
+	defer imDis.mu.Unlock()
 	_, exist := imDis.imageState[id]
 	if !exist {
 		return nil, nil
@@ -54,12 +61,14 @@ func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
 }
 
 func (imDis *ImageDispatcher) Add(id string, image []byte) error {
+	imDis.mu.Lock()
+	defer imDis.mu.Unlock()
 	//storage not full
 	if imDis.totalImagesSize+len(image) <= imDis.maxLimit {
 		return imDis.addAvailable(id, image)
 	}
 	//storage is full, need to clean,
-	imDis.logger.Debugln(fmt.Sprintf("storage is full, totalImagesSize: %d, make clean", imDis.TotalImagesSize()))
+	imDis.logger.Debugln(fmt.Sprintf("storage is full, totalImagesSize: %d, make clean", imDis.totalImagesSize))
 	err := imDis.cleanOldUseImagesOn(len(image))
 	if err != nil {
 		return err
@@ -75,7 +84,7 @@ func (imDis *ImageDispatcher) addAvailable(id string, image []byte) error {
 	}
 	imDis.totalImagesSize += len(image)
 	imDis.imageState[id] = imageInfo{size: len(image), lastUse: time.Now()}
-	imDis.logger.Debugln(fmt.Sprintf("storage not full, add image with id: %s, size: %d, now total images size: %d", id, len(image), imDis.TotalImagesSize()))
+	imDis.logger.Debugln(fmt.Sprintf("storage not full, add image with id: %s, size: %d, now total images size: %d", id, len(image), imDis.totalImagesSize))
 	return nil
 }
 

@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"sync"
-
 	"net/http"
 	"time"
 
@@ -17,11 +15,10 @@ import (
 )
 
 type Server struct {
-	c       Config
-	l       *logrus.Logger
-	ws      *http.Server
-	imgDisp *dispatcher.ImageDispatcher
-	mu      *sync.Mutex
+	config           Config
+	logger           *logrus.Logger
+	httpServer       *http.Server
+	imgageDispatcher *dispatcher.ImageDispatcher
 }
 
 type Config struct {
@@ -30,20 +27,18 @@ type Config struct {
 }
 
 func NewServer(conf Config, log *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher) Server {
-	m := sync.Mutex{}
 	return Server{
-		c:       conf,
-		l:       log,
-		ws:      &http.Server{Addr: conf.HTTPListen, Handler: handlerRequest(log, imageDispatcher, conf.ImageMaxFileSize, &m)},
-		imgDisp: imageDispatcher,
-		mu:      &m,
+		config:           conf,
+		logger:           log,
+		httpServer:       &http.Server{Addr: conf.HTTPListen, Handler: handlerRequest(log, imageDispatcher, conf.ImageMaxFileSize)},
+		imgageDispatcher: imageDispatcher,
 	}
 }
 
 func (s *Server) RunServer() {
 	go func() {
-		s.l.Infoln("start HTTP server:", s.c.HTTPListen)
-		err := s.ws.ListenAndServe()
+		s.logger.Infoln("start HTTP server:", s.config.HTTPListen)
+		err := s.httpServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			helpers.FailOnError(err, "fail start HTTP Server")
 		}
@@ -51,19 +46,19 @@ func (s *Server) RunServer() {
 }
 
 func (s *Server) Shutdown() {
-	s.l.Infoln("shutdown HTTP server... ")
-	ctx, ch := context.WithTimeout(context.Background(), time.Second*10)
-	err := s.ws.Shutdown(ctx)
+	s.logger.Infoln("shutdown HTTP server... ")
+	ctx, chancel := context.WithTimeout(context.Background(), time.Second*10)
+	err := s.httpServer.Shutdown(ctx)
 	if err != nil {
-		s.l.Errorln("fail Shutdown HTTP server")
-		ch()
+		s.logger.Errorln("fail Shutdown HTTP server")
+		chancel()
 		return
 	}
-	s.l.Infoln("success Shutdown HTTP server")
-	ch()
+	s.logger.Infoln("success Shutdown HTTP server")
+	chancel()
 }
 
-func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int, mu *sync.Mutex) http.HandlerFunc {
+func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLimit int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Server", "Previewer")
 
@@ -81,9 +76,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		l.Infoln(fmt.Sprintf("generate uniq reqId: %s for Url: %s", uniqID, r.URL.Path))
 
 		//Image found in cache
-		mu.Lock()
 		cachedImage, err := imDis.Get(uniqID)
-		mu.Unlock()
 		if err != nil {
 			l.Errorln(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -160,9 +153,7 @@ func handlerRequest(l *logrus.Logger, imDis *dispatcher.ImageDispatcher, imageLi
 		}
 
 		//save to cache
-		mu.Lock()
 		err = imDis.Add(uniqID, convertedImage)
-		mu.Unlock()
 		if err != nil {
 			l.Errorln(err)
 		}
