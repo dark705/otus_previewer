@@ -10,7 +10,7 @@ services:
       - IMAGE_MAX_FILE_SIZE=1000000
       - CACHE_SIZE=100000000
       - CACHE_TYPE=disk
-      - CACHE_TYPE=./cache
+      - CACHE_PATH=./cache
     depends_on:
       - nginx
   nginx:
@@ -24,7 +24,7 @@ services:
     volumes:
       - ./../../:/app
     working_dir: /app
-    command: sh -c 'go test -v ./... && cd ./tests/go && sleep 2 && go test -v -tags=integration'
+    command: sh -c 'go test -v -race -count 100 ./... && cd ./tests/go && sleep 2 && go test -v -tags=integration'
     depends_on:
       - previewer
 
