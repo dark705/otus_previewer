@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -13,7 +12,7 @@ import (
 func handlerRequest(logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher, imageLimit int) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		responseWriter.Header().Set("Server", "Previewer")
-		logger.Infoln(fmt.Sprintf("income request: %s %s %s", request.RemoteAddr, request.Method, request.URL))
+		logger.Infof("income request: %s %s %s", request.RemoteAddr, request.Method, request.URL)
 		parsedURL, err := ParseURL(request.URL)
 		if err != nil {
 			logger.Warnln(err)
@@ -22,7 +21,7 @@ func handlerRequest(logger *logrus.Logger, imageDispatcher *dispatcher.ImageDisp
 		}
 
 		uniqID := GenUniqIDForURL(request.URL)
-		logger.Infoln(fmt.Sprintf("generate uniq reqId: %s for Url: %s", uniqID, request.URL.Path))
+		logger.Infof("generate uniq reqId: %s for Url: %s", uniqID, request.URL.Path)
 
 		if handleCached(logger, imageDispatcher, responseWriter, uniqID) {
 			return
@@ -42,7 +41,7 @@ func handleCached(logger *logrus.Logger,
 		return true
 	}
 	if cachedImage != nil {
-		logger.Infoln(fmt.Sprintf("image for uniqID: %s, found in cache", uniqID))
+		logger.Infof("image for uniqID: %s, found in cache", uniqID)
 		_, err = responseWriter.Write(cachedImage)
 		if err != nil {
 			logger.Errorln(err)
@@ -59,7 +58,7 @@ func handleNoCached(logger *logrus.Logger,
 	uniqID string,
 	responseWriter http.ResponseWriter,
 	request *http.Request) {
-	logger.Infoln(fmt.Sprintf("image for uniq reqId: %s, not found in cache, need to dowload", uniqID))
+	logger.Infof("image for uniq reqId: %s, not found in cache, need to download", uniqID)
 	remoteResponse, err := makeRequest(parsedURL.RequestURL, request.Header, nil)
 	if err != nil {
 		http.Error(responseWriter, err.Error(), http.StatusBadGateway)
@@ -109,7 +108,7 @@ func handleRemoteResponse(logger *logrus.Logger,
 		return
 	}
 
-	logger.Infoln(fmt.Sprintf("success download image for uniq reqId: %s,", uniqID))
+	logger.Infof("success download image for uniq reqId: %s,", uniqID)
 	convertedImage, err := image.Resize(remoteImage, image.ResizeConfig{
 		Action: parsedURL.Service,
 		Width:  parsedURL.Width,

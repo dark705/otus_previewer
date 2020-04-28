@@ -3,7 +3,6 @@
 package previewer_test
 
 import (
-	"fmt"
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
@@ -14,7 +13,7 @@ import (
 )
 
 func TestStressAndRace(t *testing.T) {
-	count := 100
+	count := 1000
 	wg := sync.WaitGroup{}
 	wg.Add(count)
 
@@ -22,12 +21,12 @@ func TestStressAndRace(t *testing.T) {
 		go func(clientId int) {
 			response, err := http.Get("http://previewer:8013/resize/300/200/nginx/test_image.jpg")
 			if err != nil {
-				t.Error(fmt.Sprintf("fail on client: %d get remote image, err: %s", clientId, err))
+				t.Errorf("fail on client: %d get remote image, err: %s", clientId, err)
 			}
 			defer response.Body.Close()
 			if response.StatusCode != http.StatusOK {
-				t.Error(fmt.Sprintf("on resize existing image, Service return status code: %d, but expected code: %d",
-					response.StatusCode, http.StatusOK))
+				t.Errorf("on resize existing image, Service return status code: %d, but expected code: %d",
+					response.StatusCode, http.StatusOK)
 			}
 			wg.Done()
 		}(i)

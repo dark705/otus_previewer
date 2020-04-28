@@ -3,7 +3,6 @@
 package previewer_test
 
 import (
-	"fmt"
 	"net/http"
 	"testing"
 )
@@ -15,8 +14,8 @@ func TestRemoteServerDoNotExist(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusBadGateway {
-		t.Error(fmt.Sprintf("on a non-existing server, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusBadGateway))
+		t.Errorf("on a non-existing server, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusBadGateway)
 	}
 }
 
@@ -27,7 +26,7 @@ func TestImageNotExist(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusNotFound {
-		t.Error(fmt.Sprintf("on a non-existing image, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusNotFound))
+		t.Errorf("on a non-existing image, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusNotFound)
 	}
 }

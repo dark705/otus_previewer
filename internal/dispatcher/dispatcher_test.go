@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"testing"
 	"time"
 
@@ -72,8 +71,8 @@ func TestTotalImagesSizeNotBiggerThenLimit(t *testing.T) {
 	}
 
 	if imageDispatcher.TotalImagesSize() > countImages*len(image) {
-		t.Error(fmt.Sprintf("incorrect total images size, limit: %d, TotalImagesSize: %d",
-			cacheSizeLimit, imageDispatcher.TotalImagesSize()))
+		t.Errorf("incorrect total images size, limit: %d, TotalImagesSize: %d",
+			cacheSizeLimit, imageDispatcher.TotalImagesSize())
 	}
 }
 

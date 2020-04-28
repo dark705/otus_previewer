@@ -3,7 +3,6 @@
 package previewer_test
 
 import (
-	"fmt"
 	"net/http"
 	"testing"
 )
@@ -15,7 +14,7 @@ func TestRequestedFileNotImage(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusBadGateway {
-		t.Error(fmt.Sprintf("on a non-image file, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusBadGateway))
+		t.Errorf("on a non-image file, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusBadGateway)
 	}
 }

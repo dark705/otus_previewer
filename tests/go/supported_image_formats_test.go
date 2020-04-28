@@ -3,7 +3,6 @@
 package previewer_test
 
 import (
-	"fmt"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -19,8 +18,8 @@ func TestFormatJpeg(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		t.Error(fmt.Sprintf("on resize existing image, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusOK))
+		t.Errorf("on resize existing image, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusOK)
 	}
 
 	_, format, err := image.DecodeConfig(response.Body)
@@ -29,7 +28,7 @@ func TestFormatJpeg(t *testing.T) {
 	}
 
 	if format != "jpeg" {
-		t.Error(fmt.Sprintf("on resize image format: jpeg, Service return format: %s", format))
+		t.Errorf("on resize image format: jpeg, Service return format: %s", format)
 	}
 }
 
@@ -40,8 +39,8 @@ func TestFormatPng(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		t.Error(fmt.Sprintf("on resize existing image, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusOK))
+		t.Errorf("on resize existing image, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusOK)
 	}
 
 	_, format, err := image.DecodeConfig(response.Body)
@@ -50,7 +49,7 @@ func TestFormatPng(t *testing.T) {
 	}
 
 	if format != "png" {
-		t.Error(fmt.Sprintf("on resize image format: png, Service return format: %s", format))
+		t.Errorf("on resize image format: png, Service return format: %s", format)
 	}
 }
 
@@ -61,8 +60,8 @@ func TestFormatGif(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		t.Error(fmt.Sprintf("on resize existing image, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusOK))
+		t.Errorf("on resize existing image, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusOK)
 	}
 
 	_, format, err := image.DecodeConfig(response.Body)
@@ -71,6 +70,6 @@ func TestFormatGif(t *testing.T) {
 	}
 
 	if format != "gif" {
-		t.Error(fmt.Sprintf("on resize image format: gif, Service return format: %s", format))
+		t.Errorf("on resize image format: gif, Service return format: %s", format)
 	}
 }

@@ -22,8 +22,8 @@ func TestResize(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		t.Error(fmt.Sprintf("On resize existing image, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusOK))
+		t.Errorf("On resize existing image, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusOK)
 	}
 
 	img, _, err := image.DecodeConfig(response.Body)
@@ -32,8 +32,8 @@ func TestResize(t *testing.T) {
 	}
 
 	if img.Width != width || img.Height != height {
-		t.Error(fmt.Sprintf("on resize image to: %dx%d, Service return %dx%d dimensions",
-			width, height, img.Width, img.Height))
+		t.Errorf("on resize image to: %dx%d, Service return %dx%d dimensions",
+			width, height, img.Width, img.Height)
 	}
 }
 
@@ -47,8 +47,8 @@ func TestFill(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		t.Error(fmt.Sprintf("On fill existing image, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusOK))
+		t.Errorf("On fill existing image, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusOK)
 	}
 
 	img, _, err := image.DecodeConfig(response.Body)
@@ -57,8 +57,8 @@ func TestFill(t *testing.T) {
 	}
 
 	if img.Width != width || img.Height != height {
-		t.Error(fmt.Sprintf("on fill image to: %dx%d, Service return %dx%d dimensions",
-			width, height, img.Width, img.Height))
+		t.Errorf("on fill image to: %dx%d, Service return %dx%d dimensions",
+			width, height, img.Width, img.Height)
 	}
 }
 
@@ -74,8 +74,8 @@ func TestFit(t *testing.T) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		t.Error(fmt.Sprintf("on fit existing image, Service return status code: %d, but expected code: %d",
-			response.StatusCode, http.StatusOK))
+		t.Errorf("on fit existing image, Service return status code: %d, but expected code: %d",
+			response.StatusCode, http.StatusOK)
 	}
 
 	image, _, err := image.DecodeConfig(response.Body)
@@ -84,7 +84,7 @@ func TestFit(t *testing.T) {
 	}
 
 	if image.Width != fitWidth || image.Height != fitHeight {
-		t.Error(fmt.Sprintf("on fit image to: %dx%d, Service return %dx%d dimensions",
-			fitWidth, fitHeight, image.Width, image.Height))
+		t.Errorf("on fit image to: %dx%d, Service return %dx%d dimensions",
+			fitWidth, fitHeight, image.Width, image.Height)
 	}
 }
