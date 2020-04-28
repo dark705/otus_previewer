@@ -98,9 +98,7 @@ func TestLeastRecentUsed(t *testing.T) {
 
 	//now storage is full
 	//get image2, image1, last Recent use updated
-	time.Sleep(time.Nanosecond) //windows fix
 	_, _ = imageDispatcher.Get(uniqID2)
-	time.Sleep(time.Nanosecond) //windows fix
 	_, _ = imageDispatcher.Get(uniqID1)
 
 	//add image4, it must replace image3
@@ -132,7 +130,6 @@ func TestLeastRecentUsed(t *testing.T) {
 }
 
 func genUniqID() string {
-	time.Sleep(time.Nanosecond) //windows fix
 	uniqBytes := sha256.Sum256([]byte(time.Now().String()))
 	return hex.EncodeToString(uniqBytes[:])
 }
