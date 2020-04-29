@@ -13,7 +13,7 @@ import (
 )
 
 func TestStressAndRace(t *testing.T) {
-	count := 1000
+	count := 100
 	wg := sync.WaitGroup{}
 	wg.Add(count)
 
