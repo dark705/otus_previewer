@@ -15,7 +15,7 @@ type imageInfo struct {
 
 type ImageDispatcher struct {
 	logger          *logrus.Logger
-	mu              sync.Mutex
+	rwMutex         sync.RWMutex
 	storage         storage.Storage
 	lruList         *list.List
 	cacheList       map[string]*list.Element
@@ -36,7 +36,7 @@ func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatc
 
 	return ImageDispatcher{
 		storage:         storage,
-		mu:              sync.Mutex{},
+		rwMutex:         sync.RWMutex{},
 		lruList:         lruList,
 		cacheList:       existList,
 		totalImagesSize: totalSize,
@@ -46,14 +46,14 @@ func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatc
 }
 
 func (imDis *ImageDispatcher) TotalImagesSize() int {
-	imDis.mu.Lock()
-	defer imDis.mu.Unlock()
+	imDis.rwMutex.RLock()
+	defer imDis.rwMutex.RUnlock()
 	return imDis.totalImagesSize
 }
 
 func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
-	imDis.mu.Lock()
-	defer imDis.mu.Unlock()
+	imDis.rwMutex.Lock()
+	defer imDis.rwMutex.Unlock()
 	element, exist := imDis.cacheList[id]
 	if !exist {
 		return nil, nil
@@ -65,8 +65,8 @@ func (imDis *ImageDispatcher) Get(id string) ([]byte, error) {
 }
 
 func (imDis *ImageDispatcher) Add(id string, image []byte) error {
-	imDis.mu.Lock()
-	defer imDis.mu.Unlock()
+	imDis.rwMutex.Lock()
+	defer imDis.rwMutex.Unlock()
 	//storage not full
 	if imDis.totalImagesSize+len(image) <= imDis.maxLimit {
 		return imDis.addAvailable(id, image)

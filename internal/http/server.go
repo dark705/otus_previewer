@@ -20,13 +20,14 @@ type Server struct {
 type Config struct {
 	HTTPListen       string
 	ImageMaxFileSize int
+	ImageGetTimeout  int
 }
 
 func NewServer(config Config, logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher) Server {
 	return Server{
 		config:          config,
 		logger:          logger,
-		httpServer:      &http.Server{Addr: config.HTTPListen, Handler: handlerRequest(logger, imageDispatcher, config.ImageMaxFileSize)},
+		httpServer:      &http.Server{Addr: config.HTTPListen, Handler: handlerRequest(logger, imageDispatcher, config.ImageMaxFileSize, config.ImageGetTimeout)},
 		imageDispatcher: imageDispatcher,
 	}
 }

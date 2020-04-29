@@ -26,6 +26,7 @@ func main() {
 	server := http.NewServer(http.Config{
 		HTTPListen:       conf.HTTPListen,
 		ImageMaxFileSize: conf.ImageMaxFileSize,
+		ImageGetTimeout:  conf.ImageGetTimeout,
 	}, log, &imageDispatcher)
 
 	server.RunServer()

@@ -8,6 +8,7 @@ services:
       - LOG_LEVEL=error
       - HTTP_LISTEN=:8013
       - IMAGE_MAX_FILE_SIZE=1000000
+      - IMAGE_GET_TIMEOUT=10
       - CACHE_SIZE=100000000
       - CACHE_TYPE=disk
       - CACHE_PATH=./cache

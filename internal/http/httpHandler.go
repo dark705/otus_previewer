@@ -1,15 +1,17 @@
 package http
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/dark705/otus_previewer/internal/dispatcher"
 	"github.com/dark705/otus_previewer/internal/image"
 	"github.com/sirupsen/logrus"
 )
 
-func handlerRequest(logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher, imageLimit int) http.HandlerFunc {
+func handlerRequest(logger *logrus.Logger, imageDispatcher *dispatcher.ImageDispatcher, imageLimit int, imageGetTimeout int) http.HandlerFunc {
 	return func(responseWriter http.ResponseWriter, request *http.Request) {
 		responseWriter.Header().Set("Server", "Previewer")
 		logger.Infof("income request: %s %s %s", request.RemoteAddr, request.Method, request.URL)
@@ -26,7 +28,7 @@ func handlerRequest(logger *logrus.Logger, imageDispatcher *dispatcher.ImageDisp
 		if handleCached(logger, imageDispatcher, responseWriter, uniqID) {
 			return
 		}
-		handleNoCached(logger, imageDispatcher, imageLimit, parsedURL, uniqID, responseWriter, request)
+		handleNoCached(logger, imageDispatcher, imageLimit, imageGetTimeout, parsedURL, uniqID, responseWriter, request)
 	}
 }
 
@@ -54,13 +56,17 @@ func handleCached(logger *logrus.Logger,
 func handleNoCached(logger *logrus.Logger,
 	imageDispatcher *dispatcher.ImageDispatcher,
 	imageLimit int,
+	imageGetTimeout int,
 	parsedURL URLParams,
 	uniqID string,
 	responseWriter http.ResponseWriter,
 	request *http.Request) {
 	logger.Infof("image for uniq reqId: %s, not found in cache, need to download", uniqID)
-	remoteResponse, err := makeRequest(parsedURL.RequestURL, request.Header, nil)
+	httpClientContext, httpClientCancel := context.WithTimeout(context.Background(), time.Second*time.Duration(imageGetTimeout))
+	defer httpClientCancel()
+	remoteResponse, err := makeRequest(httpClientContext, parsedURL.RequestURL, request.Header, nil)
 	if err != nil {
+		logger.Warnf("error on make request to remote server: %s", err)
 		http.Error(responseWriter, err.Error(), http.StatusBadGateway)
 		return
 	}
