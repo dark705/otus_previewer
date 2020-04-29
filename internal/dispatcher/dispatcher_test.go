@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"sync"
 	"testing"
 	"time"
 
@@ -126,6 +127,43 @@ func TestLeastRecentUsed(t *testing.T) {
 	if image5 == nil || image4 == nil || image1 == nil {
 		t.Error("expected images not exist")
 	}
+}
+
+func TestRace(t *testing.T) {
+	image := []byte("GIF89a,...") //len 10 bytes
+	cacheSizeLimit := 80
+	routines := 500
+
+	storage := inmemory.New()
+	imageDispatcher := dispatcher.New(&storage, cacheSizeLimit, &logrus.Logger{})
+	wgWriters := sync.WaitGroup{}
+	wgReaders := sync.WaitGroup{}
+
+	wgWriters.Add(routines)
+	wgReaders.Add(routines)
+	for i := 0; i < routines; i++ {
+		uniqID := genUniqID()
+
+		go func(uniqId string) {
+			err := imageDispatcher.Add(uniqId, image)
+			if err != nil {
+				t.Error("Cant add image")
+			}
+			imageDispatcher.TotalImagesSize()
+			wgWriters.Done()
+		}(uniqID)
+
+		go func(uniqId string) {
+			_, err := imageDispatcher.Get(uniqId)
+			if err != nil {
+				t.Error("Cant add image")
+			}
+			imageDispatcher.TotalImagesSize()
+			wgReaders.Done()
+		}(uniqID)
+	}
+	wgReaders.Wait()
+	wgWriters.Wait()
 }
 
 func genUniqID() string {

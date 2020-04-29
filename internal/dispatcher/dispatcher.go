@@ -35,13 +35,13 @@ func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatc
 	}
 
 	return ImageDispatcher{
-		storage:         storage,
+		logger:          logger,
 		rwMutex:         sync.RWMutex{},
+		storage:         storage,
 		lruList:         lruList,
 		cacheList:       existList,
 		totalImagesSize: totalSize,
 		maxLimit:        limit,
-		logger:          logger,
 	}
 }
 
