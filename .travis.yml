@@ -3,8 +3,25 @@ go:
   - "1.14"
 install:
   - "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.25.0"
-script:
-  - "golangci-lint run"
-  - "go test -v -race -count 100 ./... "
-  - "make test"
-  - "make"
+stages:
+  - "Linter"
+  - "Test"
+  - "Build"
+jobs:
+  include:
+    - stage: "Linter"
+      name: "Check by linters"
+      script:
+        - "golangci-lint run"
+    - stage: "Test"
+      name: "Unit tests"
+      script:
+        - "go test -v -race -count 100 ./..."
+    - stage: "Test"
+      name: "Integrations tests"
+      script:
+        - "make test"
+    - stage: "Build"
+      name: "Build application"
+      script:
+        - "make"
