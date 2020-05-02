@@ -18,7 +18,7 @@ jobs:
       script:
         - "go test -v -race -count 100 ./..."
     - stage: "Test"
-      name: "Integrations tests"
+      name: "Integration tests"
       script:
         - "make test"
     - stage: "Build"

@@ -15,15 +15,15 @@ type imageInfo struct {
 
 type ImageDispatcher struct {
 	logger          *logrus.Logger
+	maxImagesSize   int
 	rwMutex         sync.RWMutex
 	storage         storage.Storage
 	lruList         *list.List
 	cacheList       map[string]*list.Element
 	totalImagesSize int
-	maxLimit        int
 }
 
-func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatcher {
+func New(storage storage.Storage, maxImagesSize int, logger *logrus.Logger) ImageDispatcher {
 	lruList := list.New()
 	existList := make(map[string]*list.Element)
 	var totalSize int
@@ -36,12 +36,12 @@ func New(storage storage.Storage, limit int, logger *logrus.Logger) ImageDispatc
 
 	return ImageDispatcher{
 		logger:          logger,
+		maxImagesSize:   maxImagesSize,
 		rwMutex:         sync.RWMutex{},
 		storage:         storage,
 		lruList:         lruList,
 		cacheList:       existList,
 		totalImagesSize: totalSize,
-		maxLimit:        limit,
 	}
 }
 
@@ -68,7 +68,7 @@ func (imDis *ImageDispatcher) Add(id string, image []byte) error {
 	imDis.rwMutex.Lock()
 	defer imDis.rwMutex.Unlock()
 	//storage not full
-	if imDis.totalImagesSize+len(image) <= imDis.maxLimit {
+	if imDis.totalImagesSize+len(image) <= imDis.maxImagesSize {
 		return imDis.addAvailable(id, image)
 	}
 	//storage is full, need to clean,
@@ -95,15 +95,15 @@ func (imDis *ImageDispatcher) addAvailable(id string, image []byte) error {
 }
 
 func (imDis *ImageDispatcher) cleanOldUseImagesOn(needCleanBytes int) error {
-	for imDis.totalImagesSize+needCleanBytes > imDis.maxLimit {
-		element := imDis.lruList.Back()
-		imageInfo := element.Value.(*imageInfo)
+	for imDis.totalImagesSize+needCleanBytes > imDis.maxImagesSize {
+		lruElement := imDis.lruList.Back()
+		imageInfo := lruElement.Value.(*imageInfo)
 		err := imDis.storage.Del(imageInfo.id)
 		if err != nil {
 			return err
 		}
 		delete(imDis.cacheList, imageInfo.id)
-		imDis.lruList.Remove(element)
+		imDis.lruList.Remove(lruElement)
 		imDis.totalImagesSize -= imageInfo.size
 		imDis.logger.Debugf("deleted image with id: %s, used size: %d", imageInfo.id, imageInfo.size)
 	}
