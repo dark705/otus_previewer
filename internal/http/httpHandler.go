@@ -84,7 +84,10 @@ func proxyErrorRemoteResponse(logger *logrus.Logger,
 	responseWriter http.ResponseWriter,
 	parsedURL URLParams) {
 	bodyBytes, err := ioutil.ReadAll(remoteResponse.Body)
-	_ = remoteResponse.Body.Close()
+	if err != nil {
+		logger.Errorln(err)
+	}
+	err = remoteResponse.Body.Close()
 	if err != nil {
 		logger.Errorln(err)
 	}
@@ -107,11 +110,19 @@ func handleRemoteResponse(logger *logrus.Logger,
 	imageLimit int,
 	parsedURL URLParams) {
 	remoteImage, err := image.ReadImageAsByte(response.Body, imageLimit)
-	_ = response.Body.Close()
 	if err != nil {
 		logger.Warnln(err)
 		http.Error(responseWriter, err.Error(), http.StatusBadGateway)
+		err = response.Body.Close()
+		if err != nil {
+			logger.Errorln(err)
+		}
 		return
+	}
+
+	err = response.Body.Close()
+	if err != nil {
+		logger.Errorln(err)
 	}
 
 	logger.Infof("success download image for uniq reqId: %s,", uniqID)
